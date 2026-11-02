@@ -80,6 +80,9 @@ The Linux CI job also cross-links the P0867D QNX preload library with Clang/LLD.
 See [P0867D runtime integration](docs/P0867D_RUNTIME.md) for the binding and
 bench-validation contract.
 
+See [P0867D secondary video](docs/P0867D_VIDEO.md) for the exact Delphi
+stream-111/MOST path and the remaining target gates.
+
 The HMI model can be checked with JDK 8 and the actual bundle can be compiled
 against a locally converted, user-supplied P0867D `MIBHMI.jar`:
 
