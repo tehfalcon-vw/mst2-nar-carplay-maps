@@ -98,9 +98,11 @@ DccResult dcc_decode(const uint8_t *b,size_t n,DccMessage *out) {
     *out=m;return DCC_OK;
 }
 const DccField *dcc_find(const DccMessage *m,uint16_t parent,uint16_t id,size_t occurrence) {
-    size_t i;if(!m)return NULL;
+    size_t i;
+    if(!m)return NULL;
     for(i=0;i<m->count;i++)if(m->fields[i].parent==parent&&m->fields[i].id==id) {
-        if(!occurrence)return &m->fields[i];--occurrence;
+        if(!occurrence)return &m->fields[i];
+        --occurrence;
     }
     return NULL;
 }
@@ -115,9 +117,12 @@ DccResult dcc_unsigned(const DccMessage *m,const DccField *f,uint64_t *out) {
     *out=value;return DCC_OK;
 }
 DccResult dcc_signed16(const DccMessage *m,const DccField *f,int16_t *out) {
-    uint16_t u;if(!out||!field_bounds(m,f))return DCC_ARGUMENT;
-    if(f->length!=2)return DCC_FIELD;u=be16(m->bytes+f->offset);
-    *out=(int16_t)(u<=32767?(int32_t)u:(int32_t)u-65536);return DCC_OK;
+    uint16_t u;
+    if(!out||!field_bounds(m,f))return DCC_ARGUMENT;
+    if(f->length!=2)return DCC_FIELD;
+    u=be16(m->bytes+f->offset);
+    *out=(int16_t)(u<=32767?(int32_t)u:(int32_t)u-65536);
+    return DCC_OK;
 }
 DccResult dcc_copy_text(const DccMessage *m,const DccField *f,char *out,size_t cap,size_t *written) {
     size_t n;if(!out||!written||!field_bounds(m,f))return DCC_ARGUMENT;
@@ -142,27 +147,46 @@ DccResult dcc_start(uint16_t component,const char *source,size_t n,int exits,uin
 }
 DccResult dcc_stop(uint16_t component,uint8_t *out,size_t cap,size_t *written) {
     uint8_t b[12]={0x40,0x40,0,12,0x52,3,0,6,0,0,0,0};
-    if(!out||!written)return DCC_ARGUMENT;if(cap<12)return DCC_LIMIT;
-    put16(b+10,component);memcpy(out,b,12);*written=12;return DCC_OK;
+    if(!out||!written)return DCC_ARGUMENT;
+    if(cap<12)return DCC_LIMIT;
+    put16(b+10,component);
+    memcpy(out,b,12);
+    *written=12;
+    return DCC_OK;
 }
 void dcc_session_init(DccSession *s,DccCallback cb,void *context) {
-    if(!s)return;memset(s,0,sizeof(*s));s->callback=cb;s->context=context;
+    if(!s)return;
+    memset(s,0,sizeof(*s));
+    s->callback=cb;
+    s->context=context;
 }
 static void reset(DccSession *s) {
     memset(s->frame,0,sizeof(s->frame));s->used=s->wanted=0;
     if(s->callback)s->callback(s->context,DCC_EVENT_RESET,s->epoch,NULL);
 }
 DccResult dcc_connect(DccSession *s,uint64_t now,uint64_t *token) {
-    if(!s||!token)return DCC_ARGUMENT;if(s->epoch==UINT64_MAX)return DCC_LIMIT;
-    ++s->epoch;s->connected=1;s->last_ms=s->clock_ms=now;reset(s);*token=s->epoch;return DCC_OK;
+    if(!s||!token)return DCC_ARGUMENT;
+    if(s->epoch==UINT64_MAX)return DCC_LIMIT;
+    ++s->epoch;
+    s->connected=1;
+    s->last_ms=s->clock_ms=now;
+    reset(s);
+    *token=s->epoch;
+    return DCC_OK;
 }
 DccResult dcc_disconnect(DccSession *s,uint64_t token) {
-    if(!s)return DCC_ARGUMENT;if(token!=s->epoch)return DCC_STALE;
-    if(!s->connected)return DCC_DISCONNECTED;s->connected=0;reset(s);return DCC_OK;
+    if(!s)return DCC_ARGUMENT;
+    if(token!=s->epoch)return DCC_STALE;
+    if(!s->connected)return DCC_DISCONNECTED;
+    s->connected=0;
+    reset(s);
+    return DCC_OK;
 }
 DccResult dcc_feed(DccSession *s,uint64_t token,uint64_t now,const uint8_t *data,size_t n) {
-    size_t p=0;if(!s||(!data&&n))return DCC_ARGUMENT;
-    if(token!=s->epoch)return DCC_STALE;if(!s->connected)return DCC_DISCONNECTED;
+    size_t p=0;
+    if(!s||(!data&&n))return DCC_ARGUMENT;
+    if(token!=s->epoch)return DCC_STALE;
+    if(!s->connected)return DCC_DISCONNECTED;
     if(now<s->clock_ms)return DCC_TIME;
     s->clock_ms=now;
     while(p<n) {
@@ -184,7 +208,8 @@ DccResult dcc_feed(DccSession *s,uint64_t token,uint64_t now,const uint8_t *data
     return DCC_OK;
 }
 DccResult dcc_expire(DccSession *s,uint64_t now,uint64_t timeout) {
-    if(!s||!timeout)return DCC_ARGUMENT;if(!s->connected)return DCC_DISCONNECTED;
+    if(!s||!timeout)return DCC_ARGUMENT;
+    if(!s->connected)return DCC_DISCONNECTED;
     if(now<s->clock_ms)return DCC_TIME;
     s->clock_ms=now;
     if(now-s->last_ms>=timeout){s->connected=0;reset(s);}

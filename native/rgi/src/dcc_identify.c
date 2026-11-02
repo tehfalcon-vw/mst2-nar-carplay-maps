@@ -46,10 +46,14 @@ static DccResult inspect_component(const uint8_t *v,size_t n,uint16_t wanted){
     return DCC_OK;
 }
 static int contains(const uint8_t *v,size_t n,uint16_t id){
-    size_t k;for(k=0;k<n;k+=2)if(read16(v+k)==id)return 1;return 0;
+    size_t k;
+    for(k=0;k<n;k+=2)if(read16(v+k)==id)return 1;
+    return 0;
 }
 static unsigned missing(const uint8_t *v,size_t n,const uint16_t *ids,unsigned count){
-    unsigned i,extra=0;for(i=0;i<count;i++)if(!contains(v,n,ids[i]))++extra;return extra;
+    unsigned i,extra=0;
+    for(i=0;i<count;i++)if(!contains(v,n,ids[i]))++extra;
+    return extra;
 }
 static size_t emit_list(uint8_t *out,uint16_t tag,const uint8_t *v,size_t n,
                        const uint16_t *ids,unsigned count){
@@ -74,8 +78,12 @@ DccResult dcc_identify_prepare(const uint8_t *in,size_t n,const DccIdentifyProfi
     /* Preflight everything before the first write to any caller output. */
     for(pos=6;pos<n;){
         unsigned size,tag;const uint8_t *v;size_t len;DccResult r;
-        if(n-pos<4)return DCC_TLV;size=read16(in+pos);tag=read16(in+pos+2);
-        if(size<4||size>n-pos)return DCC_TLV;v=in+pos+4;len=size-4;
+        if(n-pos<4)return DCC_TLV;
+        size=read16(in+pos);
+        tag=read16(in+pos+2);
+        if(size<4||size>n-pos)return DCC_TLV;
+        v=in+pos+4;
+        len=size-4;
         if(tag==6||tag==7){
             unsigned extra;int *seen=tag==6?&send_seen:&recv_seen;
             if((*seen)++)return DCC_DUPLICATE;
