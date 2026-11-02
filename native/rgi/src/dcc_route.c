@@ -119,9 +119,14 @@ const DccRouteLaneSet *dcc_route_current_lanes(const DccRoute *r){
 typedef struct{char *p;size_t n,cap;int ok;} Writer;
 static void putc_safe(Writer *w,char c){if(w->n<w->cap)w->p[w->n++]=c;else w->ok=0;}
 static void literal(Writer *w,const char *s){while(*s)putc_safe(w,*s++);}
+static uint64_t divide10(uint64_t value,unsigned *remainder){
+    uint64_t quotient=0;unsigned rest=0;int bit;
+    for(bit=63;bit>=0;bit--){rest=(rest<<1)|(unsigned)((value>>(unsigned)bit)&1u);if(rest>=10){rest-=10;quotient|=(uint64_t)1u<<(unsigned)bit;}}
+    *remainder=rest;return quotient;
+}
 static void decimal(Writer *w,int64_t value){char digits[24];unsigned n=0;uint64_t magnitude;
     if(value<0){putc_safe(w,'-');magnitude=(uint64_t)(-(value+1))+1;}else magnitude=(uint64_t)value;
-    do{digits[n++]=(char)('0'+magnitude%10);magnitude/=10;}while(magnitude&&n<sizeof(digits));while(n)putc_safe(w,digits[--n]);}
+    do{unsigned remainder;magnitude=divide10(magnitude,&remainder);digits[n++]=(char)('0'+remainder);}while(magnitude&&n<sizeof(digits));while(n)putc_safe(w,digits[--n]);}
 static void safe_text(Writer *w,const char *s){unsigned char c;while((c=(unsigned char)*s++)!=0)putc_safe(w,(char)(c<32||c==127?' ':c));}
 DccResult dcc_route_snapshot(const DccRoute *r,char *out,size_t cap,size_t *written){
     char temp[4096];Writer w={temp,0,sizeof(temp),1};const DccRouteManeuver *m;const DccRouteLaneSet *set;unsigned i,j;

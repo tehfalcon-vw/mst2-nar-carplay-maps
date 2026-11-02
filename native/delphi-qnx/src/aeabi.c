@@ -8,3 +8,6 @@ void __aeabi_memcpy4(void *destination,const void *source,size_t bytes){
     const unsigned char *in=(const unsigned char *)source;
     while(bytes--)*out++=*in++;
 }
+void __aeabi_memcpy8(void *destination,const void *source,size_t bytes){
+    __aeabi_memcpy4(destination,source,bytes);
+}
