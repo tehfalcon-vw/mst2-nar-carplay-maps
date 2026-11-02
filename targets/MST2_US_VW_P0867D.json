@@ -119,6 +119,16 @@
       "transportStreamPackagesReadyPrologue": "f04f2de9ecd04de20150a0e10280a0e1",
       "isoTxPath": "/dev/transport_server/spawn/isoTX",
       "packageElementBytes": 8
+    },
+    "libAirPlay": {
+      "AirPlayCopyServerInfo": { "virtualAddress": "0xffac", "prologue": "f04f2de94dde4de2" },
+      "AirPlayReceiverSessionSetup": { "virtualAddress": "0x165e0", "prologue": "f04f2de9604f9fe5", "relocation": "ldr-r4-literal" },
+      "AirPlayReceiverSessionStart": { "virtualAddress": "0x14124", "prologue": "f04f2de9c4d04de2" },
+      "AirPlayReceiverSessionTearDown": { "virtualAddress": "0x15cb8", "prologue": "f04f2de94cd04de2" },
+      "AirPlayReceiverSessionPlatformControl": { "virtualAddress": "0xc7c8", "prologue": "f04f2de9048b2ded" },
+      "AirPlayReceiverSessionControl": { "virtualAddress": "0x18b1c", "prologue": "f04f2de90270a0e1" },
+      "AirPlayReceiverSessionSetSecurityInfo": { "virtualAddress": "0x18950", "prologue": "f0452de90040a0e1" },
+      "AirPlay_DeriveAESKeySHA512ForScreen": { "virtualAddress": "0x1c344" }
     }
   },
   "featureFlags": {
