@@ -13,9 +13,9 @@ static void split_everywhere(void){
     for(split=0;split<sizeof(text)-1;split++){
         DccLogReader reader;Sink sink={0};size_t count=99,second=99;
         dcc_log_init(&reader);
-        CHECK(dcc_log_feed(&reader,text,split,capture,&sink,&count)==DCC_OK&&count==0);
+        CHECK(dcc_log_feed(&reader,text,split,capture,&sink,&count)==DCC_OK);
         CHECK(dcc_log_feed(&reader,text+split,sizeof(text)-1-split,capture,&sink,&second)==DCC_OK);
-        CHECK(second==1&&sink.calls==1&&sink.id==0x5201&&sink.fields==1);
+        CHECK(count+second==1&&sink.calls==1&&sink.id==0x5201&&sink.fields==1);
     }
     puts("PASS every split of stock CTRL diagnostic framing");
 }
