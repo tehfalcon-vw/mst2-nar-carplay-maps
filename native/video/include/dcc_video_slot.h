@@ -11,6 +11,7 @@
 #define DCC_VIDEO_FLAG_ACTIVE 0x00000001u
 #define DCC_VIDEO_FLAG_CONFIG 0x00000002u
 #define DCC_VIDEO_FLAG_IDR 0x00000004u
+#define DCC_VIDEO_FLAG_STOP 0x00000008u
 
 /* A seqlock-protected latest-frame slot. Dropping old phone frames is
  * intentional: the cluster should receive the newest complete access unit. */

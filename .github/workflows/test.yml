@@ -30,5 +30,6 @@ jobs:
             native/delphi-qnx/build/libmst2_nar_ipod.so
             native/delphi-qnx/build/libmst2_nar_launch.so
             native/delphi-qnx/build/libmst2_nar_video_gate.so
+            native/delphi-qnx/build/libmst2_nar_airplay_runtime.so
           if-no-files-found: error
 

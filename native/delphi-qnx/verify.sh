@@ -5,9 +5,10 @@ OUT=${OUT:-"$HERE/build"}
 IPOD="$OUT/libmst2_nar_ipod.so"
 LAUNCH="$OUT/libmst2_nar_launch.so"
 VIDEO="$OUT/libmst2_nar_video_gate.so"
+AIRPLAY_RUNTIME="$OUT/libmst2_nar_airplay_runtime.so"
 imports(){ readelf --dyn-syms --wide "$1" | awk '$7=="UND" && $8!=""{print $8}' | sort -u; }
 
-for file in "$IPOD" "$LAUNCH" "$VIDEO"; do
+for file in "$IPOD" "$LAUNCH" "$VIDEO" "$AIRPLAY_RUNTIME"; do
   echo "verifying $file"
   readelf -h "$file" | grep -E 'Class:|Data:|Type:|Machine:'
   readelf -d "$file" | grep -E 'NEEDED|INIT'
@@ -31,4 +32,8 @@ unexpected=$(imports "$LAUNCH" | grep -Ev '^(dlsym|strlen)$' || true)
 test -z "$unexpected"
 unexpected=$(imports "$VIDEO" | grep -Ev '^(close|delay|dlsym|lseek|memcpy|memset|mmap|open|pthread_create|pthread_detach|write|writev)$' || true)
 test -z "$unexpected"
+unexpected=$(imports "$AIRPLAY_RUNTIME" | grep -Ev '^(dlsym|memcpy|memset|mmap|mprotect|msync|munmap)$' || true)
+test -z "$unexpected"
+readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_p0867d_airplay_resolve$'
+readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_runtime_hook_install$'
 echo 'P0867D ARM ELF payload verified'
