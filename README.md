@@ -18,6 +18,7 @@ This repository is a **host-tested, target-locked integration candidate**, not
 a vehicle-validated release. It currently contains:
 
 - a bounded C99 decoder/session core for CarPlay RGI control messages;
+- a bounded C99 H.264 Annex-B to MPEG-TS packetizer for the Delphi MOST path;
 - an atomic iAP2 Identify transformer for the RGI component and message lists;
 - a P0867D-only QNX preload hook that registers the RGI control group and adds
   the route-guidance component through Delphi's stock Identify builder;

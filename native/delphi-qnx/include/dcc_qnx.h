@@ -21,6 +21,8 @@ typedef unsigned pthread_t;
 int open(const char *, int, ...);
 int close(int);
 ssize_t write(int, const void *, size_t);
+struct iovec;
+ssize_t writev(int, const struct iovec *, int);
 ssize_t read(int, void *, size_t);
 off_t lseek(int, off_t, int);
 int rename(const char *,const char *);

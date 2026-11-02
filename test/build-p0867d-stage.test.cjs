@@ -9,9 +9,11 @@ test('patchHmi appends exactly one target jar',()=>{
 });
 test('patchProcman scopes the launcher to the stock MediaHandler service',()=>{
   const stock=' -f  MediaHandler           -n"mediahandler"             -l20 -x10 -p12 -c0         -a"-c../cfg/MHConfig.cfg"';
-  const result=patchProcman(`before\n${stock}\nafter`);
+  const nav=' -f  NavigationServer       -n"navigationserver"         -l99  -x5   -r               -c6 -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"';
+  const result=patchProcman(`before\n${stock}\n${nav}\nafter`);
   assert.match(result,/-f  env .*LD_PRELOAD=\/extbin\/apps\/mst2-nar-carplay-maps\/libmst2_nar_launch\.so/);
   assert.match(result,/-a"MediaHandler" -a"-c\.\.\/cfg\/MHConfig\.cfg"/);
+  assert.match(result,/LD_PRELOAD=\/extbin\/apps\/mst2-nar-carplay-maps\/libmst2_nar_video_gate\.so" -a"NavigationServer"/);
   assert.throws(()=>patchProcman(result),/already patched/);
 });
 test('patchBundles registers an unused late-load bundle',()=>{

@@ -17,6 +17,9 @@ jobs:
       - run: cmake -S native/rgi -B build/rgi -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build/rgi
       - run: ctest --test-dir build/rgi --output-on-failure
+      - run: cmake -S native/video -B build/video -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build/video
+      - run: ctest --test-dir build/video --output-on-failure
       - run: sh native/delphi-qnx/build.sh
       - run: sh native/delphi-qnx/verify.sh
       - uses: actions/upload-artifact@v4
@@ -26,5 +29,6 @@ jobs:
           path: |
             native/delphi-qnx/build/libmst2_nar_ipod.so
             native/delphi-qnx/build/libmst2_nar_launch.so
+            native/delphi-qnx/build/libmst2_nar_video_gate.so
           if-no-files-found: error
 

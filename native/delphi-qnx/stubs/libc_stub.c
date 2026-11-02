@@ -2,6 +2,7 @@
 STUB(open)
 STUB(close)
 STUB(write)
+STUB(writev)
 STUB(read)
 STUB(lseek)
 STUB(rename)
