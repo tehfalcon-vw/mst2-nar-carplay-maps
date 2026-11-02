@@ -11,12 +11,16 @@ offset translation:
   `ipod-drvr-iap2.so`.
 - Identify control message: `0x1d01`.
 - Raw-send export: `iap2_raw_msg_send` at `0x16e8` in `libiap2client.so`.
-- Incoming RGI `0x5201`, `0x5202`, and `0x5204` currently fall through the
-  stock driver's default/no-specialized-handler branch.
+- The stock table has no control group `0x52`. The P0867D-only preload hook
+  installs bounded metadata for incoming RGI `0x5201`, `0x5202`, and `0x5204`
+  after verifying that group is still empty.
 
-Addresses are file-relative research observations, not runtime virtual
-addresses. A future native binder must resolve the actual QNX load mapping and
-prove buffer ownership, capacity, lifetime, and failure behavior.
+The manifest values are link-time virtual addresses, not assumed process
+addresses. The runtime binder derives the actual QNX load base from the
+exported `ipod_module` symbol, verifies every other symbol/table relative to
+that base, and leaves stock behavior unchanged on any mismatch. The first
+remaining runtime proof is a non-persistent bench capture of the resulting
+Identify packet and incoming diagnostic stream.
 
 ## Data path
 
@@ -24,6 +28,7 @@ prove buffer ownership, capacity, lifetime, and failure behavior.
 iPhone
   -> iAP2 Identify 0x1d01 (advertise RGI component 0x001e)
   -> RGI control frames 0x5201/0x5202/0x5204
+  -> stock mm-ipod CTRL diagnostic stream
   -> bounded decoder and session cache
   -> Delphi NavSD/HMI translation
   -> ClusterServices navigation guidance
