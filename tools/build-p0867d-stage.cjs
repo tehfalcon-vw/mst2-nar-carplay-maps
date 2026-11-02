@@ -67,16 +67,14 @@ function patchProcman(text) {
   const media=' -f  MediaHandler           -n"mediahandler"             -l20 -x10 -p12 -c0         -a"-c../cfg/MHConfig.cfg"';
   const nav=' -f  NavigationServer       -n"navigationserver"         -l99  -x5   -r               -c6 -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"';
   const carplay15=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c15';
-  const carplay0=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c0  -a"-y"';
   if(text.split(media).length!==2||text.split(nav).length!==2||
-     text.split(carplay15).length!==2||text.split(carplay0).length!==2)
+     text.split(carplay15).length!==2)
     throw new Error('unrecognized or already patched procman_core.cfg');
   const mediaReplacement=` -f  env                    -n"mediahandler"             -l20 -x10 -p12 -c0         -a"LD_PRELOAD=${INSTALL}/libmst2_nar_launch.so" -a"MediaHandler" -a"-c../cfg/MHConfig.cfg"`;
   const navReplacement=` -f  env                    -n"navigationserver"         -l99  -x5   -r               -c6 -a"LD_PRELOAD=${INSTALL}/libmst2_nar_video_gate.so" -a"NavigationServer" -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"`;
   const carplay15Replacement=` -f  env                    -n"carplay"                  -l20 -x10 -r   -c15 -a"LD_PRELOAD=${INSTALL}/libmst2_nar_airplay.so" -a"CarPlay"`;
-  const carplay0Replacement=` -f  env                    -n"carplay"                  -l20 -x10 -r   -c0  -a"LD_PRELOAD=${INSTALL}/libmst2_nar_airplay.so" -a"CarPlay" -a"-y"`;
   return text.replace(media,mediaReplacement).replace(nav,navReplacement)
-    .replace(carplay15,carplay15Replacement).replace(carplay0,carplay0Replacement);
+    .replace(carplay15,carplay15Replacement);
 }
 function mkdir(directory) { fs.mkdirSync(directory, { recursive: true }); }
 function write(root, relative, data, mode = 0o644) {

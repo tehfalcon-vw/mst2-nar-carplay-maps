@@ -58,8 +58,8 @@ The main CarPlay stream 110 remains stock-owned.
   size, ViewArea, SafeArea and stream UUID, accepts type 111 on a dedicated
   listener, derives a connection-specific AES-CTR key, parses fragmented Screen
   packets, validates avcC/AVCC and publishes complete Annex-B access units.
-- The stage builder installs that receiver only into the two mutually exclusive
-  stock `CarPlay` ProcessManager variants; main-screen stream 110 remains stock.
+- The stage builder installs that receiver only into the exact stock P0867D
+  `CarPlay -c15` ProcessManager service; main-screen stream 110 remains stock.
 - The `NavigationServer` worker uses the evidence-backed provisional MOST
   profile: H.264 PID `0x11`, PCR, and exact 64x188-byte writes. It suppresses
   stock writes only after the first complete custom block succeeds.
