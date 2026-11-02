@@ -19,6 +19,10 @@ a vehicle-validated release. It currently contains:
 
 - a bounded C99 decoder/session core for CarPlay RGI control messages;
 - a bounded C99 H.264 Annex-B to MPEG-TS packetizer for the Delphi MOST path;
+- a strict avcC/AVCC parser that emits decoder-ready Annex-B access units and
+  prepends the negotiated SPS/PPS to every IDR;
+- a seqlock-protected latest-frame transport from the CarPlay process to a
+  P0867D NavigationServer worker, with IDR gating and automatic stock fallback;
 - an atomic iAP2 Identify transformer for the RGI component and message lists;
 - a P0867D-only QNX preload hook that registers the RGI control group and adds
   the route-guidance component through Delphi's stock Identify builder;
@@ -47,8 +51,11 @@ stock QNX `env` with a scoped preload. Do not flash generated research artifacts
 to a vehicle.
 
 The first implemented milestone is end-to-end arrow, street, distance, time,
-and lane guidance. CarPlay stream 111 map video remains a separate, unimplemented
-milestone.
+and lane guidance. The video consumer, H.264 conversion and Delphi MOST output
+side are implemented offline. The remaining video milestone is the target-locked
+AirPlay stream-111 negotiation/CTR receiver that publishes into that consumer;
+the repository does not claim working map video until that boundary and the
+physical MOST/Virtual Cockpit path are exercised.
 
 ## Verify a firmware image
 
@@ -68,6 +75,9 @@ security-relevant fingerprints to match before a target is accepted.
 cmake -S native/rgi -B build/rgi
 cmake --build build/rgi
 ctest --test-dir build/rgi --output-on-failure
+cmake -S native/video -B build/video
+cmake --build build/video
+ctest --test-dir build/video --output-on-failure
 ```
 
 JavaScript tests:
