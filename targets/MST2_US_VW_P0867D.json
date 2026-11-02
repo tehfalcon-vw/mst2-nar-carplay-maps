@@ -113,6 +113,12 @@
       "gpsBuilder": "0xe1a0",
       "controlMessageTable": "0xb5ae8",
       "controlGroup52InitialBytes": "000000000000000000000000"
+    },
+    "navigationServer": {
+      "transportStreamPackagesReadyVirtualAddress": "0x22cb78",
+      "transportStreamPackagesReadyPrologue": "f04f2de9ecd04de20150a0e10280a0e1",
+      "isoTxPath": "/dev/transport_server/spawn/isoTX",
+      "packageElementBytes": 8
     }
   },
   "featureFlags": {

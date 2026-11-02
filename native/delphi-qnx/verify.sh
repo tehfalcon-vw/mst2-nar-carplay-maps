@@ -29,6 +29,6 @@ unexpected=$(imports "$IPOD" | grep -Ev '^(close|delay|dlopen|dlsym|lseek|memcmp
 test -z "$unexpected"
 unexpected=$(imports "$LAUNCH" | grep -Ev '^(dlsym|strlen)$' || true)
 test -z "$unexpected"
-unexpected=$(imports "$VIDEO" | grep -Ev '^(close|dlsym|open|write|writev)$' || true)
+unexpected=$(imports "$VIDEO" | grep -Ev '^(close|delay|dlsym|lseek|memcpy|memset|mmap|open|pthread_create|pthread_detach|write|writev)$' || true)
 test -z "$unexpected"
 echo 'P0867D ARM ELF payload verified'

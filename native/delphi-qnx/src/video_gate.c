@@ -1,8 +1,13 @@
 #include "dcc_qnx.h"
+#include "dcc_ts.h"
+#include "dcc_video_slot.h"
 #include <stdarg.h>
 
 #define ISO_TX "/dev/transport_server/spawn/isoTX"
+#define VIDEO_SLOT "/dev/shmem/mst2_nar_alt111"
 #define FD_CAP 16
+#define TS_CAPACITY 260000u
+#define STALE_POLLS 400u
 
 struct iovec { void *iov_base; size_t iov_len; };
 typedef int (*open_fn)(const char *, int, ...);
@@ -12,6 +17,19 @@ typedef ssize_t (*writev_fn)(int, const struct iovec *, int);
 
 static volatile int custom_active;
 static int iso_fds[FD_CAP];
+static uint8_t access_unit[DCC_VIDEO_SLOT_CAPACITY];
+static uint8_t transport_stream[TS_CAPACITY];
+
+struct ts_capture { size_t used; };
+
+static int capture_packet(const uint8_t packet[DCC_TS_PACKET_SIZE], void *opaque)
+{
+    struct ts_capture *capture = (struct ts_capture *)opaque;
+    if (capture->used + DCC_TS_PACKET_SIZE > sizeof(transport_stream)) return -1;
+    memcpy(transport_stream + capture->used, packet, DCC_TS_PACKET_SIZE);
+    capture->used += DCC_TS_PACKET_SIZE;
+    return 0;
+}
 
 static int same(const char *a, const char *b)
 {
@@ -53,11 +71,77 @@ int dcc_video_gate_fd(void)
     return -1;
 }
 
+static const struct dcc_video_slot *map_video_slot(void)
+{
+    int fd = open(VIDEO_SLOT, O_RDONLY);
+    off_t size;
+    void *mapping;
+    if (fd < 0) return NULL;
+    size = lseek(fd, 0, SEEK_END);
+    if (size < (off_t)sizeof(struct dcc_video_slot)) { close(fd); return NULL; }
+    mapping = mmap(NULL, sizeof(struct dcc_video_slot), PROT_READ, MAP_SHARED, fd, 0);
+    close(fd);
+    return mapping == MAP_FAILED ? NULL : (const struct dcc_video_slot *)mapping;
+}
+
+static void *video_worker(void *unused)
+{
+    const struct dcc_video_slot *slot = NULL;
+    write_fn real_write = (write_fn)dlsym(RTLD_NEXT, "write");
+    struct dcc_ts_mux mux;
+    uint32_t sequence = 0, flags = 0, stale = 0;
+    uint64_t pts90k = 0;
+    size_t length = 0;
+    int have_idr = 0;
+    (void)unused;
+    dcc_ts_init(&mux);
+    if (!real_write) return NULL;
+    for (;;) {
+        int result, fd;
+        struct ts_capture capture;
+        if (!slot) {
+            slot = map_video_slot();
+            if (!slot) { delay(200); continue; }
+        }
+        result = dcc_video_slot_read(slot, &sequence, access_unit, sizeof(access_unit),
+                                     &length, &pts90k, &flags);
+        if (result < 0) {
+            custom_active = 0; have_idr = 0; sequence = 0; slot = NULL;
+            delay(200); continue;
+        }
+        if (result == 0) {
+            if (custom_active && ++stale > STALE_POLLS) {
+                custom_active = 0; have_idr = 0; dcc_ts_init(&mux);
+            }
+            delay(5); continue;
+        }
+        stale = 0;
+        if (!(flags & DCC_VIDEO_FLAG_ACTIVE)) {
+            custom_active = 0; have_idr = 0; dcc_ts_init(&mux); continue;
+        }
+        if (!have_idr && !(flags & DCC_VIDEO_FLAG_IDR)) continue;
+        if (flags & DCC_VIDEO_FLAG_IDR) have_idr = 1;
+        fd = dcc_video_gate_fd();
+        if (fd < 0) continue;
+        capture.used = 0;
+        if (dcc_ts_push_annexb(&mux, access_unit, length, pts90k,
+                               capture_packet, &capture) || !capture.used) {
+            custom_active = 0; have_idr = 0; dcc_ts_init(&mux); continue;
+        }
+        custom_active = 1;
+        if (real_write(fd, transport_stream, capture.used) != (ssize_t)capture.used) {
+            custom_active = 0; have_idr = 0; dcc_ts_init(&mux);
+        }
+    }
+}
+
 void dcc_video_gate_init(void)
 {
     int i;
+    pthread_t worker;
     custom_active = 0;
     for (i = 0; i < FD_CAP; ++i) iso_fds[i] = -1;
+    if (pthread_create(&worker, NULL, video_worker, NULL) == 0) pthread_detach(worker);
 }
 
 int open(const char *path, int flags, ...)
