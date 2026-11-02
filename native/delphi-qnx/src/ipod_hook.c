@@ -36,6 +36,7 @@ static struct message_info route_messages[5] = {
     [2] = {"RouteGuidanceManeuverUpdate",2,0,NULL},
     [4] = {"RouteGuidanceLaneGuidanceInformation",2,0,NULL}
 };
+int dcc_relay_start(void);
 
 static void note(const char *text){
     int fd=open(LOG_FILE,O_WRONLY|O_CREAT|O_TRUNC,0666);
@@ -85,6 +86,7 @@ void dcc_delphi_init(void){
     }
     stock_gps_builder=(int (*)(void *,void *))(uintptr_t)slot[1];
     packet_add_blob=(int (*)(void *,void *,unsigned,const void *,unsigned))blob;
+    if(dcc_relay_start()!=0){note("P0867D RGI relay thread unavailable; stock behavior\n");return;}
     groups[RGI_GROUP].info=route_messages;
     groups[RGI_GROUP].count=5;
     slot[1]=(uint32_t)(uintptr_t)add_route_component;

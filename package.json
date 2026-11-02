@@ -11,7 +11,8 @@
     "test": "node --test",
     "analyze": "node tools/analyze-firmware.cjs",
     "verify-target": "node tools/verify-target.cjs",
-    "build-iap2-config": "node tools/build-iap2-config.cjs"
+    "build-iap2-config": "node tools/build-iap2-config.cjs",
+    "build-p0867d-stage": "node tools/build-p0867d-stage.cjs"
   }
 }
 

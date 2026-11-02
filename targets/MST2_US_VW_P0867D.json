@@ -46,6 +46,21 @@
       "sha256": "9df103a24635cdf3a81bcb975861532b2ac8875ffeab75b814e059400d7e6b70"
     },
     {
+      "path": "extbin/apps.tmp/bin/MediaHandler",
+      "bytes": 471863,
+      "sha256": "9946f395ab47fc1e06ea60a72c3c2cc54d5180ca664e0f2d84ddef5d713a454e"
+    },
+    {
+      "path": "extbin/apps.tmp/hmi/HMI/runHMI.sh",
+      "bytes": 12225,
+      "sha256": "ecb7ad9e037782e34668c70bec3f5f2e3d90079fc024b2e07ff840046fc0d6ba"
+    },
+    {
+      "path": "extbin/apps.tmp/hmi/HMI/config/bundles.properties",
+      "bytes": 9416,
+      "sha256": "e5167a7efc2bacdd7e6817e08c45153339e1f540aad36c3078ae74773372d12b"
+    },
+    {
       "path": "extbin/apps.tmp/bin/CarPlay",
       "bytes": 644087,
       "sha256": "47e6cee2d78776ba5d23a20b6d9f688edf1dad2bd1633c234b4f084aaecf1a71"

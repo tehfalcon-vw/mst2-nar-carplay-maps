@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Bundle-Activator: mst2.nar.cluster.Activator
+Bundle-Name: MST2 NAR RGI Cluster Bridge
+Bundle-SymbolicName: mst2.nar.rgi.cluster
+Bundle-Version: 0.2.0
+

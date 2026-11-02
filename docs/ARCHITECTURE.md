@@ -14,6 +14,9 @@ offset translation:
 - The stock table has no control group `0x52`. The P0867D-only preload hook
   installs bounded metadata for incoming RGI `0x5201`, `0x5202`, and `0x5204`
   after verifying that group is still empty.
+- P0867D `MediaHandler` imports QNX `spawn` and `spawnp`. A scoped launcher
+  interposer uses that existing seam to give only the `mm-ipod` child the
+  target-locked driver hook.
 
 The manifest values are link-time virtual addresses, not assumed process
 addresses. The runtime binder derives the actual QNX load base from the
@@ -29,14 +32,17 @@ iPhone
   -> iAP2 Identify 0x1d01 (advertise RGI component 0x001e)
   -> RGI control frames 0x5201/0x5202/0x5204
   -> stock mm-ipod CTRL diagnostic stream
-  -> bounded decoder and session cache
-  -> Delphi NavSD/HMI translation
+  -> bounded decoder and atomic session cache
+  -> shared-memory snapshot (atomic rename; stale-state timeout)
+  -> late-load HMI bundle on the stock ASL thread
+  -> ASLNavBAPAPI + maneuver list 751 + route property 732
   -> ClusterServices navigation guidance
   -> MOST graphics/navigation information
   -> Virtual Cockpit
 ```
 
-The secondary map image is a separate path:
+This route-guidance path is implemented and offline-tested. The secondary map
+image is a separate path and is not yet implemented:
 
 ```text
 CarPlay stream type 111
