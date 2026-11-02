@@ -23,7 +23,7 @@ readelf --dyn-syms --wide "$LAUNCH" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +spawnp$
 readelf -d "$IPOD" | grep -q '(INIT)'
 readelf --syms --wide "$IPOD" | grep -Eq '[0-9]+ +dcc_delphi_init$'
 
-unexpected=$(imports "$IPOD" | grep -Ev '^(close|delay|dlopen|dlsym|lseek|memcpy|memset|open|pthread_create|pthread_detach|read|rename|strlen|write)$' || true)
+unexpected=$(imports "$IPOD" | grep -Ev '^(close|delay|dlopen|dlsym|lseek|memcmp|memcpy|memset|open|pthread_create|pthread_detach|read|rename|strlen|write)$' || true)
 test -z "$unexpected"
 unexpected=$(imports "$LAUNCH" | grep -Ev '^(dlsym|strlen)$' || true)
 test -z "$unexpected"
