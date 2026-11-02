@@ -45,13 +45,13 @@ $LLD -shared -z defs -z max-page-size=0x1000 --hash-style=sysv --gc-sections \
   -o "$OUT/libmst2_nar_airplay_runtime.so" "$OUT/runtime_hook.o" \
   "$OUT/airplay_target.o" "$OUT/alt111_ingress.o" "$OUT/dcc_arm32_hook.o" \
   "$OUT/dcc_avc.o" "$OUT/dcc_screen.o" "$OUT/dcc_screen_session.o" \
-  "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/libc.so.3"
+  "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/aeabi.o" "$OUT/libc.so.3"
 $LLD -shared -z defs -z max-page-size=0x1000 --hash-style=sysv --gc-sections \
   -soname libmst2_nar_airplay.so -init dcc_airplay_hook_init \
   -o "$OUT/libmst2_nar_airplay.so" "$OUT/airplay_hook.o" "$OUT/runtime_hook.o" \
   "$OUT/airplay_target.o" "$OUT/alt111_ingress.o" "$OUT/dcc_arm32_hook.o" \
   "$OUT/dcc_avc.o" "$OUT/dcc_screen.o" "$OUT/dcc_screen_session.o" \
-  "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/libc.so.3"
+  "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/aeabi.o" "$OUT/libc.so.3"
 echo "$OUT/libmst2_nar_ipod.so"
 echo "$OUT/libmst2_nar_launch.so"
 echo "$OUT/libmst2_nar_video_gate.so"
