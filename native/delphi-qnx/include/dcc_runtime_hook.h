@@ -19,7 +19,8 @@ struct dcc_p0867d_airplay_target {
     void *teardown;
     void *platform_control;
     void *control;
-    void *set_security_info;
+    void *session_security_info;
+    void *screen_security_info;
     void *derive_key;
 };
 

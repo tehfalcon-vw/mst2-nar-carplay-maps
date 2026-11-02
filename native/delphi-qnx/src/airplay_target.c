@@ -27,7 +27,8 @@ int dcc_p0867d_airplay_resolve(struct dcc_p0867d_airplay_target *target)
         {"AirPlayReceiverSessionTearDown", 0x00015cb8u, 0xe92d4ff0u, 0xe24dd04cu},
         {"AirPlayReceiverSessionPlatformControl", 0x0000c7c8u, 0xe92d4ff0u, 0xed2d8b04u},
         {"AirPlayReceiverSessionControl", 0x00018b1cu, 0xe92d4ff0u, 0xe1a07002u},
-        {"AirPlayReceiverSessionScreen_SetSecurityInfo", 0x00018950u, 0xe92d45f0u, 0xe1a04000u}
+        {"AirPlayReceiverSessionSetSecurityInfo", 0x00018950u, 0xe92d45f0u, 0xe1a04000u},
+        {"AirPlayReceiverSessionScreen_SetSecurityInfo", 0x00019e9cu, 0xe92d40f0u, 0xe5d031e4u}
     };
     void *copy;
     void **outputs;

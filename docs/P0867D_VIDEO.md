@@ -8,6 +8,9 @@ This is the exact-target design for CarPlay auxiliary stream type 111 on
 - `CarPlay` uses `libAirPlay.so` and `libScreenStream.so`.
 - `libAirPlay.so` exports the receiver setup/start/teardown and server-info
   functions needed to advertise and accept a second display.
+- Its session-level security setter is at `0x18950` and calls the imported
+  CBC-frame initializer with the master session key. The distinct screen-level
+  AES-CTR setter is at `0x19e9c`; the two functions must not be conflated.
 - `NavigationServer` opens `/dev/transport_server/spawn/isoTX` for the stock
   cluster-map encoder.
 - The exact P0867D `transportStreamPackagesReady` routine starts at ELF virtual

@@ -128,6 +128,7 @@
       "AirPlayReceiverSessionPlatformControl": { "virtualAddress": "0xc7c8", "prologue": "f04f2de9048b2ded" },
       "AirPlayReceiverSessionControl": { "virtualAddress": "0x18b1c", "prologue": "f04f2de90270a0e1" },
       "AirPlayReceiverSessionSetSecurityInfo": { "virtualAddress": "0x18950", "prologue": "f0452de90040a0e1" },
+      "AirPlayReceiverSessionScreen_SetSecurityInfo": { "virtualAddress": "0x19e9c", "prologue": "f0402de9e431d0e5" },
       "AirPlay_DeriveAESKeySHA512ForScreen": { "virtualAddress": "0x1c344" }
     }
   },
