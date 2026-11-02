@@ -32,8 +32,10 @@ unexpected=$(imports "$LAUNCH" | grep -Ev '^(dlsym|strlen)$' || true)
 test -z "$unexpected"
 unexpected=$(imports "$VIDEO" | grep -Ev '^(close|delay|dlsym|lseek|memcpy|memset|mmap|open|pthread_create|pthread_detach|write|writev)$' || true)
 test -z "$unexpected"
-unexpected=$(imports "$AIRPLAY_RUNTIME" | grep -Ev '^(dlsym|memcpy|memset|mmap|mprotect|msync|munmap)$' || true)
+unexpected=$(imports "$AIRPLAY_RUNTIME" | grep -Ev '^(close|dlsym|ftruncate|memcpy|memset|mmap|mprotect|msync|munmap|open)$' || true)
 test -z "$unexpected"
 readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_p0867d_airplay_resolve$'
 readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_runtime_hook_install$'
+readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_alt111_ingress_begin$'
+readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_alt111_ingress_feed$'
 echo 'P0867D ARM ELF payload verified'
