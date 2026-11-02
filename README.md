@@ -40,10 +40,10 @@ are build-specific and must be bound by signature or per-target metadata.
 
 The complete route-guidance path has not yet been exercised on a bench unit.
 The staging builder does not modify firmware, patch signatures, or install to a
-unit. The persistent `cpu.conf` file is not present in the supplied EXTBIN
-archive, so the generated output contains a reviewed MediaHandler fragment
-rather than guessing its service layout. Do not flash generated research
-artifacts to a vehicle.
+unit. It verifies and extracts the exact MediaHandler service definition from
+P0867D `STDF.bin`, then emits a patched copy that launches MediaHandler through
+stock QNX `env` with a scoped preload. Do not flash generated research artifacts
+to a vehicle.
 
 The first implemented milestone is end-to-end arrow, street, distance, time,
 and lane guidance. CarPlay stream 111 map video remains a separate, unimplemented
@@ -91,7 +91,7 @@ After both native libraries and the HMI jar are built, create a non-installing
 stage from the exact extracted `apps.tmp` directory:
 
 ```sh
-npm run build-p0867d-stage -- path/to/apps.tmp native/delphi-qnx/build hmi/build/mst2-nar-rgi-hmi.jar p0867d-stage
+npm run build-p0867d-stage -- path/to/apps.tmp path/to/STDF.bin native/delphi-qnx/build hmi/build/mst2-nar-rgi-hmi.jar p0867d-stage
 ```
 
 ## Implementation sequence

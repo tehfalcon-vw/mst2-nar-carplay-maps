@@ -1,6 +1,6 @@
 #include "dcc_qnx.h"
 
-#define CHILD "/tsd/var/mst2-nar-carplay-maps/libmst2_nar_ipod.so"
+#define CHILD "/extbin/apps/mst2-nar-carplay-maps/libmst2_nar_ipod.so"
 #define FULL_ENV "LD_PRELOAD=" CHILD
 #define ENV_CAP 96
 #define VALUE_CAP 1024

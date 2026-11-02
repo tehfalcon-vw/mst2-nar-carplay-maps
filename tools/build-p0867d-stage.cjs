@@ -7,7 +7,7 @@ const path = require('node:path');
 const { rewriteIap2Config } = require('./build-iap2-config.cjs');
 const target = require('../targets/MST2_US_VW_P0867D.json');
 
-const INSTALL = '/tsd/var/mst2-nar-carplay-maps';
+const INSTALL = '/extbin/apps/mst2-nar-carplay-maps';
 const INPUTS = {
   iap2: 'cfg/iap2.cfg',
   hmi: 'hmi/HMI/runHMI.sh',
@@ -40,6 +40,16 @@ function checkedRead(root, relative) {
   }
   return data;
 }
+function checkedProcman(stdfPath) {
+  const stdf=fs.readFileSync(stdfPath),want=target.systemImages.stdf;
+  if(stdf.length!==want.bytes||sha256(stdf)!==want.sha256)throw new Error('STDF.bin is not the exact stock P0867D system image');
+  const marker=Buffer.from('##  core managers\n'),start=stdf.indexOf(marker);
+  if(start<0||stdf.indexOf(marker,start+1)>=0)throw new Error('procman_core.cfg marker is missing or ambiguous');
+  const end=stdf.indexOf(0xff,start);if(end<0)throw new Error('procman_core.cfg terminator is missing');
+  const config=stdf.subarray(start,end),file=want.procmanCore;
+  if(config.length!==file.bytes||sha256(config)!==file.sha256)throw new Error('extracted procman_core.cfg fingerprint mismatch');
+  return config;
+}
 function patchHmi(text) {
   const match = text.match(/^BOOTCLASSPATH="([^"]+)"$/m);
   if (!match || text.match(/^BOOTCLASSPATH=/gm).length !== 1) throw new Error('unrecognized runHMI.sh boot class path');
@@ -54,18 +64,27 @@ function patchBundles(text) {
   const output = text.replace(late, `${match[0]},98`);
   return `${output.replace(/\s*$/, '')}\n\n# MST2 NAR route-guidance bridge\nBundle.Name.98 = MST2NARRGI\nBundle.Activator.98 = mst2.nar.cluster.Activator\n`;
 }
+function patchProcman(text) {
+  const line=' -f  MediaHandler           -n"mediahandler"             -l20 -x10 -p12 -c0         -a"-c../cfg/MHConfig.cfg"';
+  if(text.split(line).length!==2)throw new Error('unrecognized or already patched procman_core.cfg');
+  const replacement=` -f  env                    -n"mediahandler"             -l20 -x10 -p12 -c0         -a"LD_PRELOAD=${INSTALL}/libmst2_nar_launch.so" -a"MediaHandler" -a"-c../cfg/MHConfig.cfg"`;
+  return text.replace(line,replacement);
+}
 function mkdir(directory) { fs.mkdirSync(directory, { recursive: true }); }
 function write(root, relative, data, mode = 0o644) {
   const output = path.join(root, ...relative.split('/'));mkdir(path.dirname(output));fs.writeFileSync(output, data, { flag: 'wx', mode });return output;
 }
-function build({ firmwareRoot, nativeDir, hmiJar, output }) {
+function build({ firmwareRoot, stdf, nativeDir, hmiJar, output }) {
   if (fs.existsSync(output)) throw new Error(`refusing to overwrite ${output}`);
   for (const relative of Object.values(INPUTS)) checkedRead(firmwareRoot, relative);
   const binaries = ['libmst2_nar_ipod.so', 'libmst2_nar_launch.so'];
   const native = {};
   for (const name of binaries) { const file=path.join(nativeDir,name);if(!fs.statSync(file).isFile())throw new Error(`missing native artifact: ${name}`);native[name]=fs.readFileSync(file);validateArmElf(native[name],name); }
+  if(!native['libmst2_nar_launch.so'].includes(Buffer.from(`${INSTALL}/libmst2_nar_ipod.so`)))throw new Error('launcher artifact has the wrong child preload path');
+  if(!native['libmst2_nar_ipod.so'].includes(Buffer.from('/extbin/apps/lib/ipod-drvr-iap2.so')))throw new Error('iAP2 artifact is not the P0867D Delphi hook');
   if (!fs.statSync(hmiJar).isFile()) throw new Error('missing HMI jar');
   const jar=fs.readFileSync(hmiJar);validateJar(jar);
+  const procman=checkedProcman(stdf);
   const staging=`${output}.partial-${process.pid}`;if(fs.existsSync(staging))throw new Error(`temporary stage already exists: ${staging}`);mkdir(staging);
   const files = [];
   function add(relative, data, mode) { const file=write(staging,relative,data,mode);files.push({path:relative,bytes:fs.statSync(file).size,sha256:sha256(fs.readFileSync(file))}); }
@@ -75,16 +94,16 @@ function build({ firmwareRoot, nativeDir, hmiJar, output }) {
     add('patched/hmi/HMI/runHMI.sh', patchHmi(checkedRead(firmwareRoot, INPUTS.hmi).toString('utf8')), 0o755);
     add('patched/hmi/HMI/config/bundles.properties', patchBundles(checkedRead(firmwareRoot, INPUTS.bundles).toString('utf8')));
     add('patched/cfg/iap2.cfg', rewriteIap2Config(checkedRead(firmwareRoot, INPUTS.iap2).toString('utf8')));
-    add('cpu.conf.fragment', `# Add inside the existing MediaHandler service block; preserve any stock value by appending it after a colon.\n   envar LD_PRELOAD ${INSTALL}/libmst2_nar_launch.so\n`);
-    const manifest = { schemaVersion: 1, target: target.id, installDirectory: INSTALL, stockInputs: Object.values(INPUTS).map((relative) => expected(relative)), files };
+    add('patched/etc/procman_core.cfg', patchProcman(procman.toString('utf8')));
+    const manifest = { schemaVersion: 1, target: target.id, installDirectory: INSTALL, stockInputs: [...Object.values(INPUTS).map((relative) => expected(relative)),target.systemImages.stdf,target.systemImages.stdf.procmanCore], files };
     add('stage-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
     fs.renameSync(staging,output);return manifest;
   } catch(error) { fs.rmSync(staging,{recursive:true,force:true});throw error; }
 }
 function main(argv) {
-  if (argv.length !== 4) throw new Error('usage: node tools/build-p0867d-stage.cjs <apps.tmp> <native-build-dir> <HMI-jar> <empty-output-dir>');
-  const [firmwareRoot,nativeDir,hmiJar,output]=argv.map((value)=>path.resolve(value));
-  const result=build({firmwareRoot,nativeDir,hmiJar,output});process.stdout.write(`${JSON.stringify(result,null,2)}\n`);
+  if (argv.length !== 5) throw new Error('usage: node tools/build-p0867d-stage.cjs <apps.tmp> <STDF.bin> <native-build-dir> <HMI-jar> <empty-output-dir>');
+  const [firmwareRoot,stdf,nativeDir,hmiJar,output]=argv.map((value)=>path.resolve(value));
+  const result=build({firmwareRoot,stdf,nativeDir,hmiJar,output});process.stdout.write(`${JSON.stringify(result,null,2)}\n`);
 }
 if(require.main===module){try{main(process.argv.slice(2));}catch(error){process.stderr.write(`${error.message}\n`);process.exitCode=1;}}
-module.exports={build,patchBundles,patchHmi,validateArmElf,validateJar};
+module.exports={build,patchBundles,patchHmi,patchProcman,validateArmElf,validateJar};

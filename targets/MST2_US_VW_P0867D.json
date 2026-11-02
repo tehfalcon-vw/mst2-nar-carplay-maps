@@ -81,6 +81,18 @@
       "sha256": "a10085b9d545a8fa43b70713d93a1e8ace408261d9bd27c3d0810a48878eb359"
     }
   ],
+  "systemImages": {
+    "stdf": {
+      "archivePath": "STD2Nav_NAR_VW/AP_ZR_NAV2/STDF/1/default/STDF.bin",
+      "bytes": 10092544,
+      "sha256": "8b129fa190f13e9969c8606e7926000a29dbbbf759e55c52cbb958267689c8c0",
+      "procmanCore": {
+        "path": "/etc/procman_core.cfg",
+        "bytes": 6408,
+        "sha256": "004783991da86ca2956470636265be212ab189c5f393afa161affead873680a1"
+      }
+    }
+  },
   "staticBindings": {
     "ipodDrvrIap2": {
       "identifyRequestFileOffset": "0x10ca4",

@@ -70,7 +70,8 @@ minimal link-only `libc.so.3` import surface so no proprietary QNX SDK or vendor
 library is distributed. See the repository README for HMI build and staging
 commands.
 
-The stage builder SHA-256 checks the exact stock P0867D `MediaHandler`,
+The stage builder SHA-256 checks the exact stock P0867D `STDF.bin`, extracted
+`/etc/procman_core.cfg`, `MediaHandler`,
 `mm-ipod`, `iap2.cfg`, `runHMI.sh`, and `bundles.properties`; validates both
 payloads as ARM ELF32 shared objects; validates the HMI jar; refuses an existing
 output directory; and publishes its output by a final directory rename. It
@@ -81,8 +82,8 @@ produces patched copies, never edits the supplied firmware tree.
 Before any persistent installation, validate on a recoverable Delphi bench unit
 with serial access and a verified backup:
 
-1. install the generated `cpu.conf` line only inside the exact MediaHandler
-   service after separately backing up and fingerprinting the unit's file;
+1. install the generated `procman_core.cfg` only after separately backing up
+   and fingerprinting the unit's file;
 2. inject the library for a single `mm-ipod` launch only;
 3. confirm the active log marker and unchanged stock media behavior;
 4. capture the outgoing Identify packet and verify exactly one component
