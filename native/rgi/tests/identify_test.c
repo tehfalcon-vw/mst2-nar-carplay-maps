@@ -7,7 +7,11 @@ static void w16(uint8_t *b,unsigned n){b[0]=(uint8_t)(n>>8);b[1]=(uint8_t)n;}
 static unsigned r16(const uint8_t *b){return ((unsigned)b[0]<<8)|b[1];}
 static void add(uint8_t *b,size_t *n,unsigned id,const void *v,size_t len){w16(b+*n,(unsigned)len+4);w16(b+*n+2,id);if(len)memcpy(b+*n+4,v,len);*n+=len+4;}
 static const uint8_t *find(const uint8_t *b,size_t n,unsigned id,size_t *len){size_t p=6;while(p<n){unsigned size=r16(b+p);CHECK(size>=4&&size<=n-p);if(r16(b+p+2)==id){*len=size-4;return b+p+4;}p+=size;}return NULL;}
-static int list_has(const uint8_t *v,size_t n,unsigned id){size_t p;for(p=0;p<n;p+=2)if(r16(v+p)==id)return 1;return 0;}
+static int list_has(const uint8_t *v,size_t n,unsigned id){
+    size_t p;
+    for(p=0;p<n;p+=2)if(r16(v+p)==id)return 1;
+    return 0;
+}
 static DccIdentifyProfile profile(void){DccIdentifyProfile p={0x2222,"Delphi RGI",10,63,62,61,60,6,59,6};return p;}
 static size_t fixture(uint8_t *b){
     size_t n=6,k=0;uint8_t tx[]={0x50,0,0x50,2},rx[]={0x50,1},opaque[]={0xff,0,0x40,0x40},inner[16],id[]={0,8};
@@ -55,7 +59,9 @@ static void test_errors(void){
     n=fixture(in);in[n++]=0;w16(in+2,(unsigned)n);rejected(in,n,&p,2048,DCC_TLV);
     n=fixture(in);k=0;add(nested,&k,0,zero_id,2);add(in,&n,0x1e,nested,k);w16(in+2,(unsigned)n);rejected(in,n,&p,2048,DCC_CONFLICT);
     n=fixture(in);w16(in+4,0x5201);rejected(in,n,&p,2048,DCC_UNSUPPORTED);
-    n=6;in[0]=in[1]=0x40;w16(in+4,0x1d01);for(k=0;k<64;k++)w16(ids+k*2,(unsigned)k);add(in,&n,6,ids,128);w16(in+2,(unsigned)n);rejected(in,n,&p,2048,DCC_LIMIT);
+    n=6;in[0]=in[1]=0x40;w16(in+4,0x1d01);
+    for(k=0;k<64;k++)w16(ids+k*2,(unsigned)k);
+    add(in,&n,6,ids,128);w16(in+2,(unsigned)n);rejected(in,n,&p,2048,DCC_LIMIT);
     n=fixture(in);{DccIdentifyChanges c;len=0;CHECK(dcc_identify_prepare(in,n,&p,in,sizeof(in),&len,&c)==DCC_ARGUMENT);}
     puts("PASS atomic rejection: conflicts, duplicates, malformed TLVs, odd lists, capacity, UTF-8 and overlapping buffers");
 }

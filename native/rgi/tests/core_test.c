@@ -95,7 +95,11 @@ static void test_session(void){
 }
 static void test_limits_and_mutations(void){
     uint8_t b[2048],one=1;size_t n=frame(b,0x5201),i,j;DccMessage m,unchanged;uint32_t seed=0x319879;
-    for(i=0;i<DCC_MAX_FIELDS+1;i++)add(b,&n,0x8000+(unsigned)i,&one,1);finish(b,n);fail_atomic(b,n,DCC_LIMIT);
+    for(i=0;i<DCC_MAX_FIELDS+1;i++) {
+        add(b,&n,0x8000+(unsigned)i,&one,1);
+    }
+    finish(b,n);
+    fail_atomic(b,n,DCC_LIMIT);
     /* Synthetic mutation testing, not a real CarPlay capture corpus. */
     for(i=0;i<20000;i++) {
         size_t len;seed=seed*1664525u+1013904223u;len=seed%sizeof(b);
