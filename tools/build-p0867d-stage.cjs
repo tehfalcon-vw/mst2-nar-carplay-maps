@@ -103,6 +103,8 @@ function build({ firmwareRoot, stdf, nativeDir, hmiJar, output }) {
     add('patched/hmi/HMI/config/bundles.properties', patchBundles(checkedRead(firmwareRoot, INPUTS.bundles).toString('utf8')));
     add('patched/cfg/iap2.cfg', rewriteIap2Config(checkedRead(firmwareRoot, INPUTS.iap2).toString('utf8')));
     add('patched/etc/procman_core.cfg', patchProcman(procman.toString('utf8')));
+    add('install.sh', fs.readFileSync(path.join(__dirname, '..', 'installer', 'install.sh')), 0o755);
+    add('uninstall.sh', fs.readFileSync(path.join(__dirname, '..', 'installer', 'uninstall.sh')), 0o755);
     const manifest = { schemaVersion: 1, target: target.id, installDirectory: INSTALL, stockInputs: [...Object.values(INPUTS).map((relative) => expected(relative)),target.systemImages.stdf,target.systemImages.stdf.procmanCore], files };
     add('stage-manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
     fs.renameSync(staging,output);return manifest;

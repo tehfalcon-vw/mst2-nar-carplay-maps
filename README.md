@@ -1,128 +1,213 @@
 # MST2 NAR CarPlay Maps
 
-MST2-only research and implementation work for displaying CarPlay route guidance
-and, ultimately, the CarPlay secondary map stream in North American VW/Audi
-Virtual Cockpit systems using **Delphi MST2** head units.
+CarPlay turn guidance and secondary-map video for North American VW Delphi
+MST2 units with a Virtual Cockpit.
 
-## Scope
+> [!CAUTION]
+> This is an untested vehicle beta. It modifies startup configuration on the
+> infotainment unit and can cause a boot loop. Test only with stable power, a
+> working root serial/Telnet shell, verified backups, and a recovery method.
 
-- Delphi MST2 only.
-- North American Region (NAR) firmware only.
-- First verified target: `MST2_US_VW_P0867D / STD2Nav_NAR_VW`.
-- EU `MST2_EU_VW_P0879D / STD2Nav_EU_VW` is the comparison donor.
-- TechniSat/Preh, MHI2, MHI2Q, MHS2, and MH2P are intentionally out of scope.
+## Supported unit
 
-## Current status
+Only this exact target is accepted:
 
-This repository is a **host-tested, target-locked integration candidate**, not
-a vehicle-validated release. It currently contains:
+| Item | Required value |
+|---|---|
+| Platform | Delphi MST2 navigation unit |
+| Train | `MST2_US_VW_P0867D` |
+| MU version | `0867` |
+| Variant | `STD2Nav_NAR_VW` |
+| Cluster | MQB Virtual Cockpit connected through MOST |
 
-- a bounded C99 decoder/session core for CarPlay RGI control messages;
-- a bounded C99 H.264 Annex-B to MPEG-TS packetizer for the Delphi MOST path;
-- a strict avcC/AVCC parser that emits decoder-ready Annex-B access units and
-  prepends the negotiated SPS/PPS to every IDR;
-- a seqlock-protected latest-frame transport from the CarPlay process to a
-  P0867D NavigationServer worker, with IDR gating and automatic stock fallback;
-- an atomic iAP2 Identify transformer for the RGI component and message lists;
-- a P0867D-only QNX preload hook that registers the RGI control group and adds
-  the route-guidance component through Delphi's stock Identify builder;
-- a bounded reader for the stock `mm-ipod` `CTRL[...]` receive log;
-- an atomic route, maneuver, and lane cache with disconnect timeout;
-- a P0867D HMI bundle that publishes through the stock `ASLNavBAPAPI`, list
-  `751`, and route-guidance property `732`;
-- a `MediaHandler` spawn interposer that adds the child preload only when the
-  launched argv names `mm-ipod`;
-- an exact-input tool that prepares the P0867D `iap2.cfg` message allowlists;
-- a fail-closed staging builder for the two patched HMI files and payload;
-- a read-only firmware analyzer;
-- a reproducible target verifier for P0867D;
-- verified P0867D/P0879D fingerprints and file-relative binding addresses.
+The installer rejects unexpected stock-file sizes. Do not use it on EU
+firmware, other NAR trains, non-navigation units, or TechniSat/Preh units.
 
-The P0867D iAP2 driver, AirPlay libraries, and DSI interface are byte-identical
-to the analyzed P0879D donor. This transfers the known iAP2 file-relative
-addresses exactly. CarPlay, ClusterServices, MOST, NavigationServer, and the HMI
-are build-specific and must be bound by signature or per-target metadata.
+## Beta status
 
-The complete route-guidance path has not yet been exercised on a bench unit.
-The staging builder does not modify firmware, patch signatures, or install to a
-unit. It verifies and extracts the exact MediaHandler service definition from
-P0867D `STDF.bin`, then emits a patched copy that launches MediaHandler through
-stock QNX `env` with a scoped preload. Do not flash generated research artifacts
-to a vehicle.
+The complete path is implemented and passes host, protocol, ARM-link, and HMI
+build tests. It has not yet been exercised on a physical Delphi unit. Testers
+are needed to validate boot behavior, CarPlay negotiation, route guidance,
+MPEG-TS compatibility, map presentation, and recovery.
 
-The first implemented milestone is end-to-end arrow, street, distance, time,
-and lane guidance. The complete video candidate is now implemented from
-target-locked AirPlay stream-111 negotiation and continuous AES-CTR ingress,
-through AVCC conversion, PCR-bearing MPEG-TS and fixed-block `isoTX` output, to
-stock HMI map ownership. The repository does not claim vehicle-proven map video
-until the physical Delphi MOST/Virtual Cockpit path is exercised.
+Implemented behavior:
 
-## Verify a firmware image
+- CarPlay arrows, street, distance, arrival time, and lane guidance;
+- encrypted CarPlay secondary-screen stream type 111;
+- 1010×376 cluster map with ViewArea and SafeArea metadata;
+- H.264 conversion to PCR-bearing MPEG-TS for Delphi `isoTX`;
+- IDR gating, stale-stream watchdog, and automatic factory-map fallback;
+- target-locked runtime checks that leave stock behavior unchanged on a binary
+  mismatch.
 
-The repository never contains firmware. Supply your own `EXTBIN_APPS.bin`:
+## What testers need
 
-```sh
-npm run analyze -- path/to/EXTBIN_APPS.bin reports/p0867d.json
-npm run verify-target -- reports/p0867d.json targets/MST2_US_VW_P0867D.json
+1. A confirmed `MST2_US_VW_P0867D` Delphi navigation unit.
+2. A root serial or Telnet shell that already works.
+3. A FAT32 SD card or USB drive visible from QNX.
+4. Stable vehicle or bench power during installation and first boot.
+5. The complete beta ZIP from this repository's **Releases** page.
+6. A copy of the original P0867D firmware and a known recovery procedure.
+
+If you do not already have root access and a recovery path, do not beta test
+this build. This repository does not install a toolbox, unlock Telnet, bypass
+firmware signatures, or provide factory firmware.
+
+## Install the beta
+
+### 1. Prepare the card
+
+Extract the beta ZIP directly to the root of a FAT32 SD card. The card should
+look like this:
+
+```text
+install.sh
+uninstall.sh
+stage-manifest.json
+payload/
+patched/
 ```
 
-The analyzer does not extract or execute files. The verifier requires all
-security-relevant fingerprints to match before a target is accepted.
+### 2. Confirm the unit
 
-## Native core tests
+In the unit's version screen, confirm the train is exactly:
 
-```sh
-cmake -S native/rgi -B build/rgi
-cmake --build build/rgi
-ctest --test-dir build/rgi --output-on-failure
-cmake -S native/video -B build/video
-cmake --build build/video
-ctest --test-dir build/video --output-on-failure
+```text
+MST2_US_VW_P0867D
+MU 0867
 ```
 
-JavaScript tests:
+Connect the serial/Telnet shell and log in as `root`. Keep that shell open for
+the first reboot.
+
+### 3. Find the card
+
+Insert the card and run:
+
+```sh
+mount
+```
+
+SD slot 1 is commonly `/media/mp000`, but use the path shown on your unit.
+Confirm the installer is present:
+
+```sh
+ls -l /media/mp000/install.sh
+```
+
+### 4. Install
+
+Disconnect the iPhone and run:
+
+```sh
+ksh /media/mp000/install.sh
+```
+
+The installer will:
+
+1. verify the live files match stock P0867D sizes, SHA-256 values when
+   available, and service definitions;
+2. prove `/extbin/apps` and `/etc` are writable before changing anything;
+3. back up all four modified stock files to
+   `/extbin/apps/mst2-nar-carplay-maps-backup`;
+4. copy and verify the beta payload and patched configuration; and
+5. stop and restore the backup automatically if a copy fails.
+
+Do not reboot unless the script prints `Installation completed successfully`.
+Remove the card and reboot the unit manually.
+
+## First test
+
+Perform the first test while parked or on a bench.
+
+1. Confirm the unit reaches the normal HMI and that radio/media still work.
+2. Connect an iPhone and start CarPlay.
+3. Start Apple Maps or Google Maps navigation.
+4. Confirm arrows, distance, street name, arrival time, and lanes appear in the
+   cluster.
+5. Select the normal map view in the Virtual Cockpit and check whether the
+   CarPlay map replaces the factory navigation map.
+6. End navigation, disconnect the phone, and verify the factory map returns.
+7. Repeat a CarPlay reconnect and one full ignition cycle.
+
+Please report partial success precisely. Working arrows with no map, a black
+map, one frozen frame, a disconnect, or a boot loop each identify a different
+remaining boundary.
+
+## Uninstall or recover
+
+With the card mounted and a root shell available, run:
+
+```sh
+ksh /media/mp000/uninstall.sh
+```
+
+The uninstaller restores the four stock files, verifies them, removes the beta
+payload, and intentionally keeps the backup directory. Remove the card and
+reboot manually.
+
+If the HMI does not start but the root shell still works, run `uninstall.sh`
+before doing anything else. If the unit no longer reaches a shell, use the
+recovery method and original P0867D firmware prepared before testing.
+
+## Tester report
+
+Open a GitHub issue with:
+
+- vehicle model/year and Virtual Cockpit type;
+- head-unit part number, train, MU version, and region;
+- iPhone model, iOS version, and map application;
+- boot, guidance, map, disconnect, reconnect, and ignition-cycle results;
+- whether uninstall restored normal operation; and
+- serial/HMI logs with personal data removed.
+
+From the root shell, a useful first log is:
+
+```sh
+sloginfo > /media/mp000/mst2-nar-carplay-maps.log
+```
+
+## Build a beta package
+
+Firmware is not included. Maintainers need Node.js 22, CMake, Clang/LLD, JDK 8,
+an extracted stock P0867D `apps.tmp`, the matching `STDF.bin`, and a converted
+P0867D `MIBHMI.jar`.
 
 ```sh
 npm test
+cmake -S native/rgi -B build/rgi && cmake --build build/rgi
+ctest --test-dir build/rgi --output-on-failure
+cmake -S native/video -B build/video && cmake --build build/video
+ctest --test-dir build/video --output-on-failure
+sh native/delphi-qnx/build.sh
+sh native/delphi-qnx/verify.sh
 ```
 
-The Linux CI job also cross-links the P0867D QNX preload library with Clang/LLD.
-See [P0867D runtime integration](docs/P0867D_RUNTIME.md) for the binding and
-bench-validation contract.
-
-See [P0867D secondary video](docs/P0867D_VIDEO.md) for the exact Delphi
-stream-111/MOST path and the remaining target gates.
-
-The HMI model can be checked with JDK 8 and the actual bundle can be compiled
-against a locally converted, user-supplied P0867D `MIBHMI.jar`:
+Build the HMI bundle on Windows:
 
 ```powershell
-.\hmi\test.ps1 -JdkBin C:\path\to\jdk8\bin
-.\hmi\build.ps1 -MibHmi C:\private\MIBHMI.jar -JdkBin C:\path\to\jdk8\bin
+.\hmi\test.ps1 -JdkBin C:\jdk8\bin
+.\hmi\build.ps1 -MibHmi C:\private\P0867D\MIBHMI.jar -JdkBin C:\jdk8\bin
 ```
 
-After both native libraries and the HMI jar are built, create a non-installing
-stage from the exact extracted `apps.tmp` directory:
+Create the installable stage:
 
 ```sh
-npm run build-p0867d-stage -- path/to/apps.tmp path/to/STDF.bin native/delphi-qnx/build hmi/build/mst2-nar-rgi-hmi.jar p0867d-stage
+npm run build-p0867d-stage -- \
+  path/to/apps.tmp \
+  path/to/STDF.bin \
+  native/delphi-qnx/build \
+  hmi/build/mst2-nar-rgi-hmi.jar \
+  p0867d-beta
 ```
 
-## Implementation sequence
+The builder SHA-256 checks the exact firmware inputs, validates every payload,
+and refuses to overwrite an existing output directory. See
+[architecture](docs/ARCHITECTURE.md) for the runtime design.
 
-1. Bench-validate the target-locked complete RGI-to-NavBAP path without an
-   unattended persistent installation.
-2. Capture the stock Delphi TS/PID/write contract and compare it to the current
-   evidence-backed provisional profile.
-3. Perform parked bench/vehicle validation of presentation, recovery and ignition cycles.
+## License and trademarks
 
-See [architecture](docs/ARCHITECTURE.md) and the
-[P0867D target manifest](targets/MST2_US_VW_P0867D.json).
-
-## Legal and safety
-
-Only original or permissively licensed source belongs in this repository.
-Firmware, extracted binaries, signing material, map data, and vendor assets are
-excluded. Vehicle testing must begin on a recoverable bench unit with serial
-access, verified backups, and a hardware rollback path.
-
+Project source is available under the [MIT License](LICENSE). Firmware, signing
+material, map data, and vendor binaries are not included. Volkswagen, Audi,
+Apple, CarPlay, and other trademarks belong to their respective owners. This
+is an independent community project.

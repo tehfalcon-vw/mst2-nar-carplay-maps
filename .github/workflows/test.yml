@@ -25,7 +25,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: p0867d-native-research-payload
+          name: p0867d-native-beta-payload
           path: |
             native/delphi-qnx/build/libmst2_nar_ipod.so
             native/delphi-qnx/build/libmst2_nar_launch.so

@@ -1,7 +1,7 @@
 #ifndef DCC_IDENTIFY_H
 #define DCC_IDENTIFY_H
 #include "dcc_rgi.h"
-/* Explicit experimental capabilities. These are not auto-detected hardware
+/* Explicit receiver capabilities. These are not auto-detected hardware
  * capabilities: the caller must not advertise storage its adapter cannot supply. */
 typedef struct {
     uint16_t component_id;

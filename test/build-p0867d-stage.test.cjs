@@ -1,6 +1,19 @@
 'use strict';
 const test=require('node:test');const assert=require('node:assert/strict');
+const fs=require('node:fs');const path=require('node:path');
 const {patchBundles,patchHmi,patchProcman,validateArmElf,validateJar}=require('../tools/build-p0867d-stage.cjs');
+
+test('installer is pinned to P0867D and keeps a reversible stock backup',()=>{
+  const install=fs.readFileSync(path.join(__dirname,'..','installer','install.sh'),'utf8');
+  const uninstall=fs.readFileSync(path.join(__dirname,'..','installer','uninstall.sh'),'utf8');
+  assert.match(install,/MST2_US_VW_P0867D/);
+  assert.match(install,/mst2-nar-carplay-maps-backup/);
+  assert.match(install,/sha256sum/);
+  assert.match(install,/chmod 755 .*runHMI\.sh/);
+  assert.match(uninstall,/restore runHMI\.sh .* 755/);
+  assert.doesNotMatch(install,/rm\s+-rf/);
+  assert.doesNotMatch(uninstall,/rm\s+-rf/);
+});
 
 test('patchHmi appends exactly one target jar',()=>{
   const result=patchHmi('before\nBOOTCLASSPATH="/ifs1/a.jxe:/x/b.jar"\nafter\n');

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Local research module. Input is a decrypted iAP2 control message, not USB
+/* Input is a decrypted iAP2 control message, not USB
  * packets or encrypted AirPlay data. No device transport is implemented. */
 #define DCC_MAX_FRAME 65535u
 #define DCC_MAX_FIELDS 128u

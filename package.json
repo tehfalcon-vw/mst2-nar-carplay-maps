@@ -1,8 +1,8 @@
 {
   "name": "mst2-nar-carplay-maps",
-  "version": "0.1.0-research",
+  "version": "0.1.0-beta.1",
   "private": true,
-  "description": "MST2 Delphi NAR CarPlay route-guidance and cluster-map research",
+  "description": "CarPlay navigation in the Virtual Cockpit on NAR Delphi MST2",
   "license": "MIT",
   "engines": {
     "node": ">=22"
