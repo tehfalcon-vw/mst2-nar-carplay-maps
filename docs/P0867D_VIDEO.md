@@ -37,8 +37,8 @@ The main CarPlay stream 110 remains stock-owned.
 
 ## Implemented offline
 
-- A bounded Annex-B to MPEG-TS packetizer emits PAT, PMT, H.264 PES and 90 kHz
-  PTS with independent continuity counters.
+- A bounded Annex-B to MPEG-TS packetizer emits PAT, PMT, H.264 PES, 90 kHz
+  PTS, PCR on every access unit and independent continuity counters.
 - A P0867D-only `NavigationServer` interposer tracks the exact `isoTX` file
   descriptor and passes all stock writes through by default.
 - A seqlock-protected `/dev/shmem/mst2_nar_alt111` latest-frame slot carries
@@ -54,20 +54,25 @@ The main CarPlay stream 110 remains stock-owned.
   `libAirPlay.so` binding set, installs early ARM trampolines for server-info,
   setup and teardown, and captures the master key only from the verified
   session-security call site.
-- The receiver clones the stock primary-display geometry, changes only the
-  secondary-display identity/capability fields, accepts type 111 on a dedicated
+- The receiver publishes a complete 1010x376 auxiliary display with physical
+  size, ViewArea, SafeArea and stream UUID, accepts type 111 on a dedicated
   listener, derives a connection-specific AES-CTR key, parses fragmented Screen
   packets, validates avcC/AVCC and publishes complete Annex-B access units.
 - The stage builder installs that receiver only into the two mutually exclusive
   stock `CarPlay` ProcessManager variants; main-screen stream 110 remains stock.
+- The `NavigationServer` worker uses the evidence-backed provisional MOST
+  profile: H.264 PID `0x11`, PCR, and exact 64x188-byte writes. It suppresses
+  stock writes only after the first complete custom block succeeds.
+- The HMI watches the seqlock video header, hides the native map renderer only
+  while fresh phone video exists, refreshes ownership every two seconds, and
+  restores native rendering on stop, timeout or bundle shutdown. The fitted
+  cluster remains authoritative for OFF/REDUCED/FULL data-rate requests.
 
 ## Still required before claiming video
 
-1. Make takeover conditional on live stream, codec config, an IDR and confirmed
-   cluster full-data-rate state; restore stock output on every failure path.
-2. Validate the Delphi application-write block size and TS PID contract from a
+1. Validate the Delphi application-write block size and TS PID contract from a
    real stock capture. Values proven on MHI2 must not be assumed for Delphi.
-3. Confirm display ownership, safe-area geometry and disconnect recovery on a
+2. Confirm display ownership, safe-area geometry and disconnect recovery on a
    parked vehicle or representative bench.
 
 ## Why QEMU is not the final test

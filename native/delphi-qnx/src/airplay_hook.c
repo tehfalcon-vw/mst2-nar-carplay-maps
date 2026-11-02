@@ -20,6 +20,10 @@ typedef void *AirPlayReceiverSessionRef;
 #define IPPROTO_TCP_VALUE 6
 #define ALT_PORT 7001
 #define ALT_BUFFER 524288
+#define CLUSTER_WIDTH 1010
+#define CLUSTER_HEIGHT 376
+#define CLUSTER_WIDTH_MM 244
+#define CLUSTER_HEIGHT_MM 91
 
 typedef CFDictionaryRef (*server_info_fn)(AirPlayReceiverSessionRef, CFArrayRef,
                                           uint8_t *, OSStatus *);
@@ -60,10 +64,11 @@ static volatile int enabled;
 static volatile int receiver_stop;
 static int listen_fd = -1;
 static int client_fd = -1;
+static pthread_t receiver_worker;
+static int receiver_started;
 static uint8_t master_key[16];
 static int master_valid;
 static uint64_t receive_ms;
-static uint64_t receive_pts;
 
 static CFStringRef string_new(const char *text)
 {
@@ -150,11 +155,23 @@ static void add_features(CFMutableDictionaryRef info)
     if (features) cf_release(features);
 }
 
+static void set_area(CFMutableDictionaryRef area, int x, int y, int width,
+                     int height)
+{
+    dict_set_i64(area, "originXPixels", x);
+    dict_set_i64(area, "originYPixels", y);
+    dict_set_i64(area, "widthPixels", width);
+    dict_set_i64(area, "heightPixels", height);
+}
+
 static void add_display(CFMutableDictionaryRef info)
 {
     CFArrayRef old = (CFArrayRef)dict_get(info, "displays");
     CFMutableArrayRef displays;
     CFMutableDictionaryRef display;
+    CFMutableDictionaryRef view = NULL, safe = NULL, stream = NULL;
+    CFMutableArrayRef views = NULL, streams = NULL;
+    CFStringRef uuid = NULL;
     if (!old || cf_array_count(old) < 1) return;
     displays = cf_array_copy(NULL, 0, old);
     display = dict_clone((CFDictionaryRef)cf_array_get(old, 0));
@@ -167,14 +184,45 @@ static void add_display(CFMutableDictionaryRef info)
     dict_remove(display, "yOffset");
     dict_remove(display, "windowWidth");
     dict_remove(display, "windowHeight");
+    uuid = string_new("b7e6c5a0-2222-4000-8000-000000000002");
+    views = cf_array_new(NULL, 0, array_callbacks);
+    streams = cf_array_new(NULL, 0, array_callbacks);
+    view = cf_dict_new(NULL, 0, dict_key_callbacks, dict_value_callbacks);
+    safe = cf_dict_new(NULL, 0, dict_key_callbacks, dict_value_callbacks);
+    stream = cf_dict_new(NULL, 0, dict_key_callbacks, dict_value_callbacks);
+    if (!uuid || !views || !streams || !view || !safe || !stream) goto done;
+    set_area(view, 0, 0, CLUSTER_WIDTH, CLUSTER_HEIGHT);
+    set_area(safe, 0, 58, CLUSTER_WIDTH, 248);
+    dict_set(view, "safeArea", safe);
+    cf_array_append(views, view);
+    dict_set_i64(stream, "originXPixels", 0);
+    dict_set_i64(stream, "originYPixels", 0);
+    dict_set_i64(stream, "zIndex", 0);
+    dict_set(stream, "uuid", uuid);
+    cf_array_append(streams, stream);
+    dict_set(display, "uuid", uuid);
+    dict_set(display, "uid", uuid);
+    dict_set_string(display, "name", "Instrument Cluster");
     dict_set_i64(display, "type", STREAM_ALT);
+    dict_set_i64(display, "widthPixels", CLUSTER_WIDTH);
+    dict_set_i64(display, "heightPixels", CLUSTER_HEIGHT);
+    dict_set_i64(display, "widthPhysical", CLUSTER_WIDTH_MM);
+    dict_set_i64(display, "heightPhysical", CLUSTER_HEIGHT_MM);
     dict_set_i64(display, "maxFPS", 30);
-    dict_set_i64(display, "features", 2);
-    dict_set_string(display, "uuid", "b7e6c5a0-2222-4000-8000-000000000002");
+    dict_set_i64(display, "features", 0);
+    dict_set(display, "initialVideoStreams", streams);
+    dict_set(display, "viewAreas", views);
+    dict_set_i64(display, "initialViewArea", 0);
     dict_set_string(display, "initialURL", "maps:/car/instrumentcluster/map");
     cf_array_append(displays, display);
     dict_set(info, "displays", displays);
 done:
+    if (stream) cf_release(stream);
+    if (safe) cf_release(safe);
+    if (view) cf_release(view);
+    if (streams) cf_release(streams);
+    if (views) cf_release(views);
+    if (uuid) cf_release(uuid);
     if (display) cf_release(display);
     if (displays) cf_release(displays);
 }
@@ -234,12 +282,10 @@ static void *receiver_thread(void *unused)
         if (count <= 0) break;
         receive_ms += 5u;
         if (dcc_alt111_ingress_feed(input, (size_t)count,
-                                    receive_ms, receive_pts)) break;
-        receive_pts += 3000u;
+                                    receive_ms, 0)) break;
     }
 done:
-    if (fd >= 0) close(fd);
-    client_fd = -1;
+    if (fd >= 0 && client_fd == fd) { client_fd = -1; close(fd); }
     dcc_alt111_ingress_stop();
     return NULL;
 }
@@ -247,11 +293,9 @@ done:
 static int start_receiver(uint64_t connection_id)
 {
     int port = ALT_PORT;
-    pthread_t thread;
     if (!master_valid || !server_socket_open) return -1;
     receiver_stop = 0;
     receive_ms = 0;
-    receive_pts = 0;
     if (dcc_alt111_ingress_begin(master_key, connection_id)) return -1;
     if (server_socket_open(AF_INET_VALUE, SOCK_STREAM_VALUE, IPPROTO_TCP_VALUE,
                            -ALT_PORT, &port, -ALT_BUFFER, &listen_fd)) {
@@ -259,19 +303,26 @@ static int start_receiver(uint64_t connection_id)
         listen_fd = -1;
         return -1;
     }
-    if (pthread_create(&thread, NULL, receiver_thread, NULL)) {
+    if (pthread_create(&receiver_worker, NULL, receiver_thread, NULL)) {
         close(listen_fd); listen_fd = -1; dcc_alt111_ingress_stop(); return -1;
     }
-    pthread_detach(thread);
+    receiver_started = 1;
     return port;
 }
 
 static void stop_receiver(void)
 {
     receiver_stop = 1;
-    if (client_fd >= 0) { close(client_fd); client_fd = -1; }
-    if (listen_fd >= 0) { close(listen_fd); listen_fd = -1; }
-    delay(20);
+    if (client_fd >= 0) {
+        int fd = client_fd; client_fd = -1; (void)shutdown(fd, 2); close(fd);
+    }
+    if (listen_fd >= 0) {
+        int fd = listen_fd; listen_fd = -1; (void)shutdown(fd, 2); close(fd);
+    }
+    if (receiver_started) {
+        (void)pthread_join(receiver_worker, NULL);
+        receiver_started = 0;
+    }
     dcc_alt111_ingress_stop();
 }
 

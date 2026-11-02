@@ -42,16 +42,21 @@ iPhone
 ```
 
 This route-guidance path is implemented and offline-tested. The secondary map
-image is a separate path and is not yet implemented:
+image is implemented as a separate target-locked integration candidate:
 
 ```text
 CarPlay stream type 111
-  -> AirPlay/ScreenStream receiver
-  -> NavigationServer source arbitration
+  -> encrypted AirPlay/ScreenStream receiver
+  -> AVCC-to-Annex-B and PCR-bearing MPEG-TS
+  -> NavigationServer fixed-block source arbitration
   -> ClusterServices GfxStreamSink
   -> MOST video stream
   -> Virtual Cockpit map layer
 ```
+
+Everything through the `isoTX` application-write boundary is host-tested or
+ARM link/ABI checked. The proprietary transport resource, MOST hardware and
+physical cockpit presentation cannot be validated without a target.
 
 ## Regional rule
 

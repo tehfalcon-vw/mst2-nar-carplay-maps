@@ -6,7 +6,8 @@
 #define ISO_TX "/dev/transport_server/spawn/isoTX"
 #define VIDEO_SLOT "/dev/shmem/mst2_nar_alt111"
 #define FD_CAP 16
-#define TS_CAPACITY 260000u
+#define TS_PACKETS_PER_WRITE 64u
+#define TS_BLOCK_SIZE (TS_PACKETS_PER_WRITE * DCC_TS_PACKET_SIZE)
 #define STALE_POLLS 400u
 
 struct iovec { void *iov_base; size_t iov_len; };
@@ -18,16 +19,27 @@ typedef ssize_t (*writev_fn)(int, const struct iovec *, int);
 static volatile int custom_active;
 static int iso_fds[FD_CAP];
 static uint8_t access_unit[DCC_VIDEO_SLOT_CAPACITY];
-static uint8_t transport_stream[TS_CAPACITY];
+static uint8_t transport_stream[TS_BLOCK_SIZE];
 
-struct ts_capture { size_t used; };
+struct ts_block {
+    size_t used;
+    int fd;
+    write_fn write_call;
+    unsigned completed;
+};
 
 static int capture_packet(const uint8_t packet[DCC_TS_PACKET_SIZE], void *opaque)
 {
-    struct ts_capture *capture = (struct ts_capture *)opaque;
-    if (capture->used + DCC_TS_PACKET_SIZE > sizeof(transport_stream)) return -1;
-    memcpy(transport_stream + capture->used, packet, DCC_TS_PACKET_SIZE);
-    capture->used += DCC_TS_PACKET_SIZE;
+    struct ts_block *block = (struct ts_block *)opaque;
+    if (!block || block->used + DCC_TS_PACKET_SIZE > sizeof(transport_stream)) return -1;
+    memcpy(transport_stream + block->used, packet, DCC_TS_PACKET_SIZE);
+    block->used += DCC_TS_PACKET_SIZE;
+    if (block->used == sizeof(transport_stream)) {
+        if (block->write_call(block->fd, transport_stream, sizeof(transport_stream)) !=
+            (ssize_t)sizeof(transport_stream)) return -1;
+        block->used = 0;
+        ++block->completed;
+    }
     return 0;
 }
 
@@ -89,16 +101,18 @@ static void *video_worker(void *unused)
     const struct dcc_video_slot *slot = NULL;
     write_fn real_write = (write_fn)dlsym(RTLD_NEXT, "write");
     struct dcc_ts_mux mux;
+    struct ts_block block;
     uint32_t sequence = 0, flags = 0, stale = 0;
     uint64_t pts90k = 0;
     size_t length = 0;
     int have_idr = 0;
     (void)unused;
     dcc_ts_init(&mux);
+    memset(&block, 0, sizeof(block));
+    block.write_call = real_write;
     if (!real_write) return NULL;
     for (;;) {
         int result, fd;
-        struct ts_capture capture;
         if (!slot) {
             slot = map_video_slot();
             if (!slot) { delay(200); continue; }
@@ -106,32 +120,30 @@ static void *video_worker(void *unused)
         result = dcc_video_slot_read(slot, &sequence, access_unit, sizeof(access_unit),
                                      &length, &pts90k, &flags);
         if (result < 0) {
-            custom_active = 0; have_idr = 0; sequence = 0; slot = NULL;
+            custom_active = 0; have_idr = 0; sequence = 0; block.used = 0; slot = NULL;
             delay(200); continue;
         }
         if (result == 0) {
             if (custom_active && ++stale > STALE_POLLS) {
-                custom_active = 0; have_idr = 0; dcc_ts_init(&mux);
+                custom_active = 0; have_idr = 0; block.used = 0; dcc_ts_init(&mux);
             }
             delay(5); continue;
         }
         stale = 0;
         if (!(flags & DCC_VIDEO_FLAG_ACTIVE)) {
-            custom_active = 0; have_idr = 0; dcc_ts_init(&mux); continue;
+            custom_active = 0; have_idr = 0; block.used = 0; dcc_ts_init(&mux); continue;
         }
         if (!have_idr && !(flags & DCC_VIDEO_FLAG_IDR)) continue;
         if (flags & DCC_VIDEO_FLAG_IDR) have_idr = 1;
         fd = dcc_video_gate_fd();
         if (fd < 0) continue;
-        capture.used = 0;
+        block.fd = fd;
+        block.completed = 0;
         if (dcc_ts_push_annexb(&mux, access_unit, length, pts90k,
-                               capture_packet, &capture) || !capture.used) {
-            custom_active = 0; have_idr = 0; dcc_ts_init(&mux); continue;
+                               capture_packet, &block)) {
+            custom_active = 0; have_idr = 0; block.used = 0; dcc_ts_init(&mux); continue;
         }
-        custom_active = 1;
-        if (real_write(fd, transport_stream, capture.used) != (ssize_t)capture.used) {
-            custom_active = 0; have_idr = 0; dcc_ts_init(&mux);
-        }
+        if (block.completed) custom_active = 1;
     }
 }
 

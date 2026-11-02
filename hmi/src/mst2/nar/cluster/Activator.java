@@ -13,5 +13,5 @@ public final class Activator implements BundleActivator {
             System.out.println("[mst2-nar-rgi] HMI bridge started");
         } catch(Throwable error){System.out.println("[mst2-nar-rgi] HMI start failed: "+error);}
     }
-    public void stop(BundleContext context){if(reader!=null){reader.stop();reader=null;}Publisher.clear();}
+    public void stop(BundleContext context){if(reader!=null){reader.stop();reader=null;}KombiMapOwner.update(false);Publisher.clear();}
 }

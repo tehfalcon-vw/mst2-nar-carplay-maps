@@ -51,11 +51,11 @@ stock QNX `env` with a scoped preload. Do not flash generated research artifacts
 to a vehicle.
 
 The first implemented milestone is end-to-end arrow, street, distance, time,
-and lane guidance. The video consumer, H.264 conversion and Delphi MOST output
-side are implemented offline. The remaining video milestone is the target-locked
-AirPlay stream-111 negotiation/CTR receiver that publishes into that consumer;
-the repository does not claim working map video until that boundary and the
-physical MOST/Virtual Cockpit path are exercised.
+and lane guidance. The complete video candidate is now implemented from
+target-locked AirPlay stream-111 negotiation and continuous AES-CTR ingress,
+through AVCC conversion, PCR-bearing MPEG-TS and fixed-block `isoTX` output, to
+stock HMI map ownership. The repository does not claim vehicle-proven map video
+until the physical Delphi MOST/Virtual Cockpit path is exercised.
 
 ## Verify a firmware image
 
@@ -112,9 +112,9 @@ npm run build-p0867d-stage -- path/to/apps.tmp path/to/STDF.bin native/delphi-qn
 
 1. Bench-validate the target-locked complete RGI-to-NavBAP path without an
    unattended persistent installation.
-2. Negotiate CarPlay stream type 111 and route its video through the verified
-   ClusterServices/MOST graphics path.
-3. Add stock-navigation ownership, watchdog, rollback, and full bench validation.
+2. Capture the stock Delphi TS/PID/write contract and compare it to the current
+   evidence-backed provisional profile.
+3. Perform parked bench/vehicle validation of presentation, recovery and ignition cycles.
 
 See [architecture](docs/ARCHITECTURE.md) and the
 [P0867D target manifest](targets/MST2_US_VW_P0867D.json).

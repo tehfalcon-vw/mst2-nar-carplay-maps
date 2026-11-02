@@ -63,6 +63,18 @@ static void encode_pts(uint8_t out[5], uint64_t value)
     out[4] = (uint8_t)(1u | ((value & 0x7fu) << 1));
 }
 
+static void encode_pcr(uint8_t out[6], uint64_t pts)
+{
+    uint64_t base = pts > 9000u ? pts - 9000u : 0u;
+    base &= 0x1ffffffffull;
+    out[0] = (uint8_t)(base >> 25);
+    out[1] = (uint8_t)(base >> 17);
+    out[2] = (uint8_t)(base >> 9);
+    out[3] = (uint8_t)(base >> 1);
+    out[4] = (uint8_t)(((base & 1u) << 7) | 0x7eu);
+    out[5] = 0;
+}
+
 void dcc_ts_init(struct dcc_ts_mux *mux)
 {
     if (mux) memset(mux, 0, sizeof(*mux));
@@ -92,13 +104,22 @@ int dcc_ts_push_annexb(struct dcc_ts_mux *m, const uint8_t *au, size_t n,
         packet[2] = (uint8_t)DCC_TS_VIDEO_PID;
         packet[3] = (uint8_t)(0x10u | (m->video_cc & 0x0fu));
         m->video_cc = (uint8_t)((m->video_cc + 1u) & 0x0fu);
+        adaptation = first ? 8u : 0u;
+        capacity -= adaptation;
         if (remaining < capacity) {
-            adaptation = capacity - remaining;
+            adaptation += capacity - remaining;
             packet[3] |= 0x20u;
             packet[4] = (uint8_t)(adaptation - 1u);
-            if (adaptation > 1u) packet[5] = 0;
-            capacity -= adaptation;
+            packet[5] = first ? 0x10u : 0u;
+            if (first) encode_pcr(packet + 6, pts);
+            capacity = remaining;
             payload = 4u + adaptation;
+        } else if (adaptation) {
+            packet[3] |= 0x20u;
+            packet[4] = 7u;
+            packet[5] = 0x10u;
+            encode_pcr(packet + 6, pts);
+            payload = 12u;
         } else payload = 4u;
         while (capacity && hpos < sizeof(header)) {
             packet[payload++] = header[hpos++];

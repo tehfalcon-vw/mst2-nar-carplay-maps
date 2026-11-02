@@ -2,7 +2,10 @@
 
 This original late-load OSGi bundle polls `/dev/shmem/mst2-nar-rgi.state` and
 publishes validated CarPlay guidance through the stock P0867D `ASLNavBAPAPI`,
-property 732, and list 751. It does not replace or redistribute stock classes.
+property 732, and list 751. It also observes the Type-111 shared-memory seqlock
+header and uses P0867D's stock map-visible/map-invisible events to arbitrate the
+native renderer. Stale or stopped phone video restores stock rendering. The
+bundle does not replace or redistribute stock classes.
 
 Build against `MIBHMI.jar` converted from the exact target's `MIBHMI.jxe`:
 

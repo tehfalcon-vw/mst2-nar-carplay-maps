@@ -39,7 +39,7 @@ readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+
 readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_runtime_hook_install$'
 readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_alt111_ingress_begin$'
 readelf --dyn-syms --wide "$AIRPLAY_RUNTIME" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +dcc_alt111_ingress_feed$'
-unexpected=$(imports "$AIRPLAY" | grep -Ev '^(accept|close|delay|dlsym|ftruncate|memcpy|memset|mmap|mprotect|msync|munmap|open|pthread_create|pthread_detach|read)$' || true)
+unexpected=$(imports "$AIRPLAY" | grep -Ev '^(accept|close|delay|dlsym|ftruncate|memcpy|memset|mmap|mprotect|msync|munmap|open|pthread_create|pthread_join|read|shutdown)$' || true)
 test -z "$unexpected"
 readelf -d "$AIRPLAY" | grep -q '(INIT)'
 readelf --dyn-syms --wide "$AIRPLAY" | grep -Eq 'GLOBAL +DEFAULT +[0-9]+ +AES_CBCFrame_Init$'

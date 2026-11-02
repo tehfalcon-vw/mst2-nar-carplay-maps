@@ -29,17 +29,18 @@ int main(void)
     for (i = 0; i < packets; ++i) {
         const uint8_t *p = c.bytes + i * 188u;
         if (p[0] != 0x47) return 4;
-        if (pid(p) == 0x100u) {
+        if (pid(p) == DCC_TS_VIDEO_PID) {
             size_t off = 4u;
             ++video;
             if (p[3] & 0x20u) off += 1u + p[4];
-            if ((p[1] & 0x40u) && memcmp(p + off, "\x00\x00\x01\xe0", 4)) return 5;
+            if ((p[1] & 0x40u) && (!(p[3] & 0x20u) || p[4] < 7u ||
+                !(p[5] & 0x10u) || memcmp(p + off, "\x00\x00\x01\xe0", 4))) return 5;
         }
     }
     if (!video || mux.access_units != 1u) return 6;
     memset(&c, 0, sizeof(c));
     if (dcc_ts_push_annexb(&mux, au, sizeof(au), 93000u, collect, &c)) return 7;
-    if (pid(c.bytes) != 0x100u || (c.bytes[3] & 0x0fu) == 0u) return 8;
+    if (pid(c.bytes) != DCC_TS_VIDEO_PID || (c.bytes[3] & 0x0fu) == 0u) return 8;
     puts("MPEG-TS packetizer checks passed");
     return 0;
 }

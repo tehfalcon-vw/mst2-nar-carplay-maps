@@ -13,7 +13,7 @@ MOST device contract applies to MST2 Delphi.
 | MHI2 Audi B9 | Type-111 receiver with dynamic ViewArea and key-frame controls | Direct remux/renderer variants, native-map fallback | Feature negotiation, `features=2` frame-rate observation, ViewArea lifecycle and reconnect behavior. |
 | MHI2Q Audi | Type-111 handled by stock AirPlay/OMX path | Decoded NV12 readback, GLES/displayable plane and Java Context ownership | Negotiation, stock-decoder reuse and lifecycle lessons. OMX, displayables and Context80 are MHI2Q-specific. |
 | MST2 TechniSat | Type-111 receiver publishes complete H.264 access units | DisplayManager's stock encoder/RingIO/Jacinto path is substituted before MOST | Latest-complete-AU buffering, consumer watchdog, IDR gating, stock restoration and HMI data-rate lessons. The Jacinto/RingIO hook does not exist on Delphi. |
-| MST2 Delphi P0867D | Static firmware proof of AirPlay functions and stock `NavigationServer` isoTX producer | `/dev/transport_server/spawn/isoTX`, `ClusterServices` GfxStreamSink | This project's target. Packet/block/PID, HMI ownership and physical presentation still require target evidence. |
+| MST2 Delphi P0867D | Exact AirPlay hooks and encrypted Type-111 receiver, offline linked for the target | `/dev/transport_server/spawn/isoTX`, `ClusterServices` GfxStreamSink, stock map-visibility events | This project's target. The remaining uncertainty is physical presentation and whether the provisional TS profile matches the Delphi resource manager. |
 
 Primary public evidence:
 
@@ -66,17 +66,20 @@ only custom write path, waits for IDR, and suppresses stock writes only while a
 fresh custom frame generation is active. This keeps a CarPlay or producer crash
 from permanently blanking the cluster.
 
-The following values deliberately remain target-unknown:
+The implementation now carries one explicit provisional interop profile:
 
-- Delphi MPEG-TS video PID and PAT/PMT expectations;
-- accepted application-write grouping for the transport-server resource;
-- whether stock GfxStreamSink full-data-rate state must be explicitly acquired;
-- NAR cluster canvas, physical dimensions and safe areas;
-- reconnect and ignition-cycle timing on the fitted cluster.
+- 1010x376 pixels, 244x91 mm, one full display area and a 1010x248 safe area;
+- H.264 PID `0x11`, PMT PID `0x1000`, PCR on every access unit;
+- exactly 64 TS packets / 12032 bytes per application write;
+- the stock HMI map visibility events, refreshed while fresh Type-111 frames
+  exist and restored on stop or a 2.5-second timeout.
 
-MHI2's `0x11` PID and 12032-byte MOST writes are useful experiment candidates,
-not defaults to label as verified. The Delphi stage must retain a fail-closed
-target fingerprint and a one-step stock restore until those values are captured.
+The geometry is proven on the same MQB Virtual Cockpit path by MST2 TechniSat;
+the PID and block contract are proven on MHI2/MOST150. They are the strongest
+available no-hardware candidates, not Delphi validation. P0867D confirms that
+the cluster owns data-rate requests and that the HMI controls stock renderer
+visibility. The stage retains fail-closed fingerprints and automatic stock
+restore until the provisional values can be captured on a Delphi unit.
 
 ## What emulation can and cannot close
 

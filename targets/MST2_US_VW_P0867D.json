@@ -135,6 +135,12 @@
   "featureFlags": {
     "isSTARTUP_NAV_VARIANT_AVAILABLE": 367,
     "isNAV_MapSwitch": 139
+  },
+  "provisionalInteropProfile": {
+    "status": "cross-platform candidate; physical Delphi validation required",
+    "clusterCanvas": { "widthPixels": 1010, "heightPixels": 376, "widthPhysical": 244, "heightPhysical": 91 },
+    "safeArea": { "originXPixels": 0, "originYPixels": 58, "widthPixels": 1010, "heightPixels": 248 },
+    "mpegTs": { "program": 1, "pmtPid": "0x1000", "videoPid": "0x0011", "packetsPerWrite": 64, "bytesPerWrite": 12032 }
   }
 }
 
