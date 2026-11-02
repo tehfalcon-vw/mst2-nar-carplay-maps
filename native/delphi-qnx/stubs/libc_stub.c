@@ -1,0 +1,9 @@
+#define STUB(name) void name(void) {}
+STUB(open)
+STUB(close)
+STUB(write)
+STUB(dlopen)
+STUB(dlsym)
+STUB(memcpy)
+STUB(memset)
+STUB(strlen)

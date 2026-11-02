@@ -16,4 +16,5 @@ jobs:
       - run: cmake -S native/rgi -B build/rgi -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build/rgi
       - run: ctest --test-dir build/rgi --output-on-failure
+      - run: sh native/delphi-qnx/build.sh
 

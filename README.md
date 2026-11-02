@@ -14,11 +14,15 @@ Virtual Cockpit systems using **Delphi MST2** head units.
 
 ## Current status
 
-This repository is an **offline, host-tested research implementation**, not a
-flashable release. It currently contains:
+This repository is a **host-tested, target-locked research implementation**, not
+a flashable release. It currently contains:
 
 - a bounded C99 decoder/session core for CarPlay RGI control messages;
 - an atomic iAP2 Identify transformer for the RGI component and message lists;
+- a P0867D-only QNX preload hook that registers the RGI control group and adds
+  the route-guidance component through Delphi's stock Identify builder;
+- a bounded reader for the stock `mm-ipod` `CTRL[...]` receive log;
+- an exact-input tool that prepares the P0867D `iap2.cfg` message allowlists;
 - a read-only firmware analyzer;
 - a reproducible target verifier for P0867D;
 - verified P0867D/P0879D fingerprints and file-relative binding addresses.
@@ -28,8 +32,14 @@ to the analyzed P0879D donor. This transfers the known iAP2 file-relative
 addresses exactly. CarPlay, ClusterServices, MOST, NavigationServer, and the HMI
 are build-specific and must be bound by signature or per-target metadata.
 
-No installer, firmware patch, signature bypass, or on-device receiver is
+The hook has not yet been exercised on a bench unit. No installer, firmware
+patch, signature bypass, HMI/cluster state adapter, or map-video bridge is
 published yet. Do not flash generated research artifacts to a vehicle.
+
+The first implemented milestone is route-guidance ingress: advertising the RGI
+component, allowing messages `0x5200` through `0x5204`, and safely recognizing
+incoming route, maneuver, and lane messages. It does not yet render anything in
+the Virtual Cockpit.
 
 ## Verify a firmware image
 
@@ -57,17 +67,19 @@ JavaScript tests:
 npm test
 ```
 
+The Linux CI job also cross-links the P0867D QNX preload library with Clang/LLD.
+See [P0867D runtime integration](docs/P0867D_RUNTIME.md) for the binding and
+bench-validation contract.
+
 ## Implementation sequence
 
-1. Bind the Identify transformer after complete `0x1D01` serialization and
-   before iAP2 transport framing.
-2. Add specialized receive dispatch for RGI `0x5201`, `0x5202`, and `0x5204`,
-   preserving stock dispatch for every unrelated message.
-3. Translate decoded route, maneuver, and lane state into the Delphi NavSD/HMI
+1. Bench-validate the target-locked Identify hook and stock diagnostic receive
+   path without installing a persistent firmware modification.
+2. Translate decoded route, maneuver, and lane state into the Delphi NavSD/HMI
    model with atomic reset on disconnect.
-4. Negotiate CarPlay stream type 111 and route its video through the verified
+3. Negotiate CarPlay stream type 111 and route its video through the verified
    ClusterServices/MOST graphics path.
-5. Add stock-navigation ownership, watchdog, rollback, and bench validation.
+4. Add stock-navigation ownership, watchdog, rollback, and full bench validation.
 
 See [architecture](docs/ARCHITECTURE.md) and the
 [P0867D target manifest](targets/MST2_US_VW_P0867D.json).

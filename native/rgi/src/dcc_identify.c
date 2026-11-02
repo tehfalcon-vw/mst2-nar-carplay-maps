@@ -29,6 +29,22 @@ static size_t component(const DccIdentifyProfile *p,uint8_t *out){
     }
     write16(out,(unsigned)n);write16(out+2,0x1e);return n;
 }
+static int valid_profile(const DccIdentifyProfile *p){
+    return p&&valid_name(p->name,p->name_bytes)&&p->current_road_chars&&
+        p->destination_chars&&p->after_road_chars&&
+        p->maneuver_description_chars&&p->maneuver_slots&&
+        p->lane_description_chars&&p->lane_slots;
+}
+DccResult dcc_identify_component_payload(const DccIdentifyProfile *p,
+    uint8_t *out,size_t capacity,size_t *written){
+    uint8_t built[320];size_t total;
+    if(!out||!written||!valid_profile(p))return DCC_ARGUMENT;
+    total=component(p,built);
+    if(total<4||capacity<total-4)return DCC_LIMIT;
+    memcpy(out,built+4,total-4);
+    *written=total-4;
+    return DCC_OK;
+}
 static int known_component(uint16_t id){
     switch(id){case 0x0e:case 0x0f:case 0x10:case 0x11:case 0x12:
         case 0x14:case 0x15:case 0x16:case 0x17:case 0x18:return 1;default:return 0;}
@@ -69,9 +85,7 @@ DccResult dcc_identify_prepare(const uint8_t *in,size_t n,const DccIdentifyProfi
     if(!in||!out||!p||!written||!changes)return DCC_ARGUMENT;
     if(n<6||n>DCC_MAX_FRAME||in[0]!=0x40||in[1]!=0x40||read16(in+2)!=n)return DCC_FRAME;
     if(read16(in+4)!=0x1d01)return DCC_UNSUPPORTED;
-    if(!valid_name(p->name,p->name_bytes)||!p->current_road_chars||!p->destination_chars||
-       !p->after_road_chars||!p->maneuver_description_chars||!p->maneuver_slots||
-       !p->lane_description_chars||!p->lane_slots)return DCC_FIELD;
+    if(!valid_profile(p))return DCC_FIELD;
     if((uintptr_t)in>UINTPTR_MAX-n||(uintptr_t)out>UINTPTR_MAX-capacity)return DCC_ARGUMENT;
     if((uintptr_t)out<(uintptr_t)in+n&&(uintptr_t)in<(uintptr_t)out+capacity)return DCC_ARGUMENT;
     comp_size=component(p,comp);need=n;

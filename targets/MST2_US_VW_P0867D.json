@@ -36,6 +36,16 @@
       "sha256": "6a18114142295fe2bd7cf0b739f40e9ce082bbbaa272eb35e2bea02d4bf92341"
     },
     {
+      "path": "extbin/apps.tmp/cfg/iap2.cfg",
+      "bytes": 6886,
+      "sha256": "e51bb331ef2290a518dc4795bc1e646c5be85fdc3e72cca39ccdb6ca6af3e1ea"
+    },
+    {
+      "path": "extbin/apps.tmp/usr/bin/mm-ipod",
+      "bytes": 51796,
+      "sha256": "9df103a24635cdf3a81bcb975861532b2ac8875ffeab75b814e059400d7e6b70"
+    },
+    {
       "path": "extbin/apps.tmp/bin/CarPlay",
       "bytes": 644087,
       "sha256": "47e6cee2d78776ba5d23a20b6d9f688edf1dad2bd1633c234b4f084aaecf1a71"
@@ -67,6 +77,15 @@
       "rawSendExport": "iap2_raw_msg_send",
       "rawSendFileOffset": "0x16e8",
       "localIpcCommand": "0x3000"
+    },
+    "ipodDriverRuntime": {
+      "ipodModule": "0x302c0",
+      "packetAddParamBlob": "0x226c4",
+      "identifyBuilderTable": "0xb2720",
+      "gpsBuilderSlot": "0xb27d0",
+      "gpsBuilder": "0xe1a0",
+      "controlMessageTable": "0xb5ae8",
+      "controlGroup52InitialBytes": "000000000000000000000000"
     }
   },
   "featureFlags": {

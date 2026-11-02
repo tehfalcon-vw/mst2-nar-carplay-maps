@@ -79,6 +79,18 @@ static void test_missing_and_edges(void){
     rejected(in,sizeof(in),&p,sizeof(out),DCC_LIMIT);
     puts("PASS missing/partial message lists, no duplicate new IDs, original order preserved; frame-size overflow refused");
 }
+static void test_component_payload(void){
+    uint8_t out[128],copy[128];size_t used=99,len=0;DccIdentifyProfile p=profile();
+    memset(out,0xa5,sizeof(out));
+    CHECK(dcc_identify_component_payload(&p,out,sizeof(out),&used)==DCC_OK);
+    CHECK(used==63&&r16(out)==6&&r16(out+2)==0&&r16(out+4)==0x2222);
+    CHECK(r16(out+6)==15&&r16(out+8)==1&&!memcmp(out+10,"Delphi RGI\0",11));
+    memcpy(copy,out,sizeof(out));used=99;
+    CHECK(dcc_identify_component_payload(&p,out,62,&used)==DCC_LIMIT&&used==99&&!memcmp(out,copy,sizeof(out)));
+    p.lane_slots=0;len=used;
+    CHECK(dcc_identify_component_payload(&p,out,sizeof(out),&used)==DCC_ARGUMENT&&used==len&&!memcmp(out,copy,sizeof(out)));
+    puts("PASS Delphi packet_addparam_blob component payload and atomic bounds");
+}
 static void test_mutations(void){
     uint8_t base[1024],in[1024],out[2048],old[2048];DccIdentifyProfile p=profile();size_t n=fixture(base),i,k,used;DccIdentifyChanges c;
     for(i=0;i<n;i++)for(k=0;k<8;k++){
@@ -88,4 +100,4 @@ static void test_mutations(void){
     }
     puts("PASS all single-bit mutations of synthetic Identify fixture: bounded output and atomic failure");
 }
-int main(void){test_happy();test_errors();test_missing_and_edges();test_mutations();puts("IDENTIFY TESTS PASSED (buffer-only; no phone negotiation tested)");return 0;}
+int main(void){test_happy();test_errors();test_missing_and_edges();test_component_payload();test_mutations();puts("IDENTIFY TESTS PASSED (buffer-only; no phone negotiation tested)");return 0;}

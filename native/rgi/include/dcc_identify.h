@@ -24,4 +24,10 @@ typedef struct {
 DccResult dcc_identify_prepare(const uint8_t *input, size_t input_bytes,
     const DccIdentifyProfile *, uint8_t *output, size_t output_capacity,
     size_t *written, DccIdentifyChanges *changes);
+
+/* Build only the nested payload of Identification parameter 0x001E. This is
+ * the form expected by Delphi's packet_addparam_blob helper. Output and
+ * written remain unchanged on failure. */
+DccResult dcc_identify_component_payload(const DccIdentifyProfile *,
+    uint8_t *output, size_t output_capacity, size_t *written);
 #endif
