@@ -66,10 +66,17 @@ function patchBundles(text) {
 function patchProcman(text) {
   const media=' -f  MediaHandler           -n"mediahandler"             -l20 -x10 -p12 -c0         -a"-c../cfg/MHConfig.cfg"';
   const nav=' -f  NavigationServer       -n"navigationserver"         -l99  -x5   -r               -c6 -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"';
-  if(text.split(media).length!==2||text.split(nav).length!==2)throw new Error('unrecognized or already patched procman_core.cfg');
+  const carplay15=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c15';
+  const carplay0=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c0  -a"-y"';
+  if(text.split(media).length!==2||text.split(nav).length!==2||
+     text.split(carplay15).length!==2||text.split(carplay0).length!==2)
+    throw new Error('unrecognized or already patched procman_core.cfg');
   const mediaReplacement=` -f  env                    -n"mediahandler"             -l20 -x10 -p12 -c0         -a"LD_PRELOAD=${INSTALL}/libmst2_nar_launch.so" -a"MediaHandler" -a"-c../cfg/MHConfig.cfg"`;
   const navReplacement=` -f  env                    -n"navigationserver"         -l99  -x5   -r               -c6 -a"LD_PRELOAD=${INSTALL}/libmst2_nar_video_gate.so" -a"NavigationServer" -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"`;
-  return text.replace(media,mediaReplacement).replace(nav,navReplacement);
+  const carplay15Replacement=` -f  env                    -n"carplay"                  -l20 -x10 -r   -c15 -a"LD_PRELOAD=${INSTALL}/libmst2_nar_airplay.so" -a"CarPlay"`;
+  const carplay0Replacement=` -f  env                    -n"carplay"                  -l20 -x10 -r   -c0  -a"LD_PRELOAD=${INSTALL}/libmst2_nar_airplay.so" -a"CarPlay" -a"-y"`;
+  return text.replace(media,mediaReplacement).replace(nav,navReplacement)
+    .replace(carplay15,carplay15Replacement).replace(carplay0,carplay0Replacement);
 }
 function mkdir(directory) { fs.mkdirSync(directory, { recursive: true }); }
 function write(root, relative, data, mode = 0o644) {
@@ -78,12 +85,13 @@ function write(root, relative, data, mode = 0o644) {
 function build({ firmwareRoot, stdf, nativeDir, hmiJar, output }) {
   if (fs.existsSync(output)) throw new Error(`refusing to overwrite ${output}`);
   for (const relative of Object.values(INPUTS)) checkedRead(firmwareRoot, relative);
-  const binaries = ['libmst2_nar_ipod.so', 'libmst2_nar_launch.so', 'libmst2_nar_video_gate.so'];
+  const binaries = ['libmst2_nar_ipod.so', 'libmst2_nar_launch.so', 'libmst2_nar_video_gate.so', 'libmst2_nar_airplay.so'];
   const native = {};
   for (const name of binaries) { const file=path.join(nativeDir,name);if(!fs.statSync(file).isFile())throw new Error(`missing native artifact: ${name}`);native[name]=fs.readFileSync(file);validateArmElf(native[name],name); }
   if(!native['libmst2_nar_launch.so'].includes(Buffer.from(`${INSTALL}/libmst2_nar_ipod.so`)))throw new Error('launcher artifact has the wrong child preload path');
   if(!native['libmst2_nar_ipod.so'].includes(Buffer.from('/extbin/apps/lib/ipod-drvr-iap2.so')))throw new Error('iAP2 artifact is not the P0867D Delphi hook');
   if(!native['libmst2_nar_video_gate.so'].includes(Buffer.from('/dev/transport_server/spawn/isoTX')))throw new Error('video gate artifact has the wrong Delphi transport path');
+  if(!native['libmst2_nar_airplay.so'].includes(Buffer.from('/dev/shmem/mst2_nar_alt111')))throw new Error('AirPlay artifact has the wrong shared video path');
   if (!fs.statSync(hmiJar).isFile()) throw new Error('missing HMI jar');
   const jar=fs.readFileSync(hmiJar);validateJar(jar);
   const procman=checkedProcman(stdf);

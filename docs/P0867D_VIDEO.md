@@ -48,20 +48,26 @@ The main CarPlay stream 110 remains stock-owned.
   and writes them through the captured stock descriptor. Takeover is
   process-local and times out after two seconds without a new producer frame;
   no persistent marker can leave the stock map suppressed after a crash.
-- The exact staging builder validates the stock `NavigationServer`, installs the
-  gate and patches only its ProcessManager launch entry.
+- The exact staging builder validates the stock executables and scopes each
+  preload to its owning ProcessManager service.
+- A target-locked `CarPlay` preload now validates the complete P0867D
+  `libAirPlay.so` binding set, installs early ARM trampolines for server-info,
+  setup and teardown, and captures the master key only from the verified
+  session-security call site.
+- The receiver clones the stock primary-display geometry, changes only the
+  secondary-display identity/capability fields, accepts type 111 on a dedicated
+  listener, derives a connection-specific AES-CTR key, parses fragmented Screen
+  packets, validates avcC/AVCC and publishes complete Annex-B access units.
+- The stage builder installs that receiver only into the two mutually exclusive
+  stock `CarPlay` ProcessManager variants; main-screen stream 110 remains stock.
 
 ## Still required before claiming video
 
-1. Port the stream-111 AirPlay negotiation and AES receive boundary to the exact
-   P0867D `libAirPlay.so` ARM prologues.
-2. Make the CarPlay receiver publish its validated Annex-B access units into
-   the implemented shared slot.
-3. Make takeover conditional on live stream, codec config, an IDR and confirmed
+1. Make takeover conditional on live stream, codec config, an IDR and confirmed
    cluster full-data-rate state; restore stock output on every failure path.
-4. Validate the Delphi application-write block size and TS PID contract from a
+2. Validate the Delphi application-write block size and TS PID contract from a
    real stock capture. Values proven on MHI2 must not be assumed for Delphi.
-5. Confirm display ownership, safe-area geometry and disconnect recovery on a
+3. Confirm display ownership, safe-area geometry and disconnect recovery on a
    parked vehicle or representative bench.
 
 ## Why QEMU is not the final test

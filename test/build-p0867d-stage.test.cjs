@@ -10,10 +10,14 @@ test('patchHmi appends exactly one target jar',()=>{
 test('patchProcman scopes the launcher to the stock MediaHandler service',()=>{
   const stock=' -f  MediaHandler           -n"mediahandler"             -l20 -x10 -p12 -c0         -a"-c../cfg/MHConfig.cfg"';
   const nav=' -f  NavigationServer       -n"navigationserver"         -l99  -x5   -r               -c6 -a"-fcfg" -a"../cfg/NAV/v0/NC/Delphi/NavServer.cfg"';
-  const result=patchProcman(`before\n${stock}\n${nav}\nafter`);
+  const cp15=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c15';
+  const cp0=' -f  CarPlay                -n"carplay"                  -l20 -x10 -r   -c0  -a"-y"';
+  const result=patchProcman(`before\n${stock}\n${nav}\n${cp15}\n${cp0}\nafter`);
   assert.match(result,/-f  env .*LD_PRELOAD=\/extbin\/apps\/mst2-nar-carplay-maps\/libmst2_nar_launch\.so/);
   assert.match(result,/-a"MediaHandler" -a"-c\.\.\/cfg\/MHConfig\.cfg"/);
   assert.match(result,/LD_PRELOAD=\/extbin\/apps\/mst2-nar-carplay-maps\/libmst2_nar_video_gate\.so" -a"NavigationServer"/);
+  assert.match(result,/LD_PRELOAD=\/extbin\/apps\/mst2-nar-carplay-maps\/libmst2_nar_airplay\.so" -a"CarPlay"/);
+  assert.match(result,/-c0  -a"LD_PRELOAD=.*libmst2_nar_airplay\.so" -a"CarPlay" -a"-y"/);
   assert.throws(()=>patchProcman(result),/already patched/);
 });
 test('patchBundles registers an unused late-load bundle',()=>{
