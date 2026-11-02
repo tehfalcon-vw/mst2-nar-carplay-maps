@@ -1,0 +1,11 @@
+build/
+reports/
+firmware/
+*.7z
+*.bin
+*.ifs
+*.jxe
+*.jar
+*.log
+.DS_Store
+

@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "id": "MST2_US_VW_P0867D_STD2Nav_NAR_VW",
+  "platform": "MST2",
+  "vendor": "DELPHI",
+  "region": "NAR",
+  "release": "MST2_US_VW_P0867D",
+  "variant": "STD2Nav_NAR_VW",
+  "muVersion": "0867",
+  "sourceArchiveSHA256": "25491f90220d26e2deeac88f79bb7fb9ea921d31954c5f91455452e2817a2a7e",
+  "extbinAppsSHA256": "6010fb78bd6f0f3c927de99b5c57c81f021a9a171a86dd5ec8185a748fd25c76",
+  "requiredEntries": [
+    {
+      "path": "extbin/apps.tmp/lib/ipod-drvr-iap2.so",
+      "bytes": 783734,
+      "sha256": "2cc1439bd71d3a394291915a8c324d87ce34e985b9be69237ed6905e64394425"
+    },
+    {
+      "path": "extbin/apps.tmp/lib/libiap2client.so",
+      "bytes": 22960,
+      "sha256": "97854159b74cd401c5faa7e413635693bee0a8c94b6d9183abfdb9d3779004b9"
+    },
+    {
+      "path": "extbin/apps.tmp/lib/libAirPlay.so",
+      "bytes": 160384,
+      "sha256": "ff1f00e43394c451c8578e4f7e237d0a58ebe9916a8d7b3e25e6132ff8392791"
+    },
+    {
+      "path": "extbin/apps.tmp/lib/libAirPlaySupport.so",
+      "bytes": 671036,
+      "sha256": "464877138ba69efe1e4c0818bcdf508717a8c07d5b8d022abad2d094f0acea82"
+    },
+    {
+      "path": "extbin/apps.tmp/jar/dsiifc.jar",
+      "bytes": 1184373,
+      "sha256": "6a18114142295fe2bd7cf0b739f40e9ce082bbbaa272eb35e2bea02d4bf92341"
+    },
+    {
+      "path": "extbin/apps.tmp/bin/CarPlay",
+      "bytes": 644087,
+      "sha256": "47e6cee2d78776ba5d23a20b6d9f688edf1dad2bd1633c234b4f084aaecf1a71"
+    },
+    {
+      "path": "extbin/apps.tmp/bin/ClusterServices",
+      "bytes": 694751,
+      "sha256": "73679b61062e9704a16949bd8632602595a0aaa414c11e79bd29c30806cf5a5e"
+    },
+    {
+      "path": "extbin/apps.tmp/bin/NavigationServer",
+      "bytes": 4909124,
+      "sha256": "5383338687f06a8c731ed31c3a8f7a2a6a422c1ca8d98108054e7cd3563503c4"
+    },
+    {
+      "path": "extbin/apps.tmp/bin/Most",
+      "bytes": 1346199,
+      "sha256": "a10085b9d545a8fa43b70713d93a1e8ace408261d9bd27c3d0810a48878eb359"
+    }
+  ],
+  "staticBindings": {
+    "ipodDrvrIap2": {
+      "identifyRequestFileOffset": "0x10ca4",
+      "identifyMessageId": "0x1d01",
+      "rgiComponentId": "0x001e",
+      "stockUnhandledIncomingIds": ["0x5201", "0x5202", "0x5204"]
+    },
+    "libiap2client": {
+      "rawSendExport": "iap2_raw_msg_send",
+      "rawSendFileOffset": "0x16e8",
+      "localIpcCommand": "0x3000"
+    }
+  },
+  "featureFlags": {
+    "isSTARTUP_NAV_VARIANT_AVAILABLE": 367,
+    "isNAV_MapSwitch": 139
+  }
+}
+

@@ -1,0 +1,16 @@
+{
+  "name": "mst2-nar-carplay-maps",
+  "version": "0.1.0-research",
+  "private": true,
+  "description": "MST2 Delphi NAR CarPlay route-guidance and cluster-map research",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "analyze": "node tools/analyze-firmware.cjs",
+    "verify-target": "node tools/verify-target.cjs"
+  }
+}
+

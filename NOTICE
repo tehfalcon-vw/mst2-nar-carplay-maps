@@ -1,0 +1,13 @@
+This repository includes code derived from delphi-carplay-cluster-bridge:
+https://github.com/cartellone99/delphi-carplay-cluster-bridge
+
+Upstream revision: 9cb69de40fc994213cc28a0872e208d6e7d54c65
+Upstream copyright: Copyright (c) 2026 Delphi CarPlay Cluster Bridge contributors
+Upstream license: MIT
+
+The native/rgi protocol core, firmware analyzer, and their original tests retain
+their upstream notices and are redistributed under the MIT license.
+
+Volkswagen, Audi, Apple, CarPlay, Android Auto, and all other trademarks belong
+to their respective owners. This is an independent research project.
+

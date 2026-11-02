@@ -1,0 +1,29 @@
+{
+  "status": "experimental-host-only",
+  "releaseValidation": "Both release C suites passed under Wasmtime/WASI with undefined-behavior checks; 7 Node tests passed. Remote CI has not yet run for this release.",
+  "validation": "host-only",
+  "language": "C99",
+  "compiler": "Zig 0.14.1 C compiler",
+  "flags": [
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-O2",
+    "-DNDEBUG",
+    "-fsanitize=undefined",
+    "-fno-sanitize-recover=all"
+  ],
+  "result": "all seven host test groups passed",
+  "syntheticMalformedMutations": 20000,
+  "structuredMutationCoverage": "each single-bit mutation of a synthetic route frame",
+  "realPhoneCapturesTested": 0,
+  "qnxAbiValidated": false,
+  "delphiReceiveBindingImplemented": false,
+  "identifyRgiComponentImplemented": false,
+  "hmiBapBindingImplemented": false,
+  "radioOperations": 0,
+  "identifyBufferTransformerImplemented": true,
+  "identifyTests": "All four synthetic test groups passed in WASI/Wasmtime; undefined-behavior checks enabled",
+  "identifyNativeWindowsTest": "Execution blocked by Windows Application Control; no protection changes",
+  "actualPhoneIdentifyAcceptanceVerified": false
+}

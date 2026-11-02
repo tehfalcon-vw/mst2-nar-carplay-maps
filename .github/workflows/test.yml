@@ -1,0 +1,19 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
+      - run: cmake -S native/rgi -B build/rgi -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build/rgi
+      - run: ctest --test-dir build/rgi --output-on-failure
+
