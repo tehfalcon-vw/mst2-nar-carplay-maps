@@ -12,6 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: sudo apt-get update && sudo apt-get install --no-install-recommends -y lld
       - run: npm test
       - run: cmake -S native/rgi -B build/rgi -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build/rgi
