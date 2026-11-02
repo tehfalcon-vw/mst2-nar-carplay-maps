@@ -25,7 +25,10 @@ static DccResult text(const DccMessage *m,uint16_t id,char *out){
 static int addressed(const DccMessage *m,uint16_t component){
     size_t occurrence=0;int any=0;
     for(;;){const DccField *f=dcc_find(m,DCC_ROOT,0,occurrence++);uint64_t value;
-        if(!f)break;any=1;if(dcc_unsigned(m,f,&value)==DCC_OK&&value==component)return 1;}
+        if(!f)break;
+        any=1;
+        if(dcc_unsigned(m,f,&value)==DCC_OK&&value==component)return 1;
+    }
     return !any;
 }
 void dcc_route_init(DccRoute *r){
@@ -122,12 +125,14 @@ static void decimal(Writer *w,int64_t value){char digits[24];unsigned n=0;uint64
 static void safe_text(Writer *w,const char *s){unsigned char c;while((c=(unsigned char)*s++)!=0)putc_safe(w,(char)(c<32||c==127?' ':c));}
 DccResult dcc_route_snapshot(const DccRoute *r,char *out,size_t cap,size_t *written){
     char temp[4096];Writer w={temp,0,sizeof(temp),1};const DccRouteManeuver *m;const DccRouteLaneSet *set;unsigned i,j;
-    if(!r||!out||!written)return DCC_ARGUMENT;literal(&w,"active=");decimal(&w,r->active?1:0);putc_safe(&w,'\n');
+    if(!r||!out||!written)return DCC_ARGUMENT;
+    literal(&w,"active=");decimal(&w,r->active?1:0);putc_safe(&w,'\n');
     if(r->active){m=dcc_route_current_maneuver(r);literal(&w,"type=");decimal(&w,m?m->type:-1);literal(&w,"\nangle=");decimal(&w,m?m->angle:1000);literal(&w,"\nlht=");decimal(&w,m?m->left_hand:0);literal(&w,"\nroads=");
         if(m)for(i=0;i<m->road_count;i++){if(i)putc_safe(&w,',');decimal(&w,m->roads[i]);}
         literal(&w,"\ndist=");decimal(&w,r->distance_m);literal(&w,"\nstep=");decimal(&w,m?m->step_m:0);literal(&w,"\nstreet=");safe_text(&w,r->road);literal(&w,"\nrtt=");decimal(&w,r->remaining_s);literal(&w,"\ndest=");decimal(&w,r->destination_m);putc_safe(&w,'\n');
         set=dcc_route_current_lanes(r);literal(&w,"lanes=");decimal(&w,set?(int)set->count:0);putc_safe(&w,'\n');
         if(set)for(i=0;i<set->count;i++){literal(&w,"lane");decimal(&w,i);putc_safe(&w,'=');decimal(&w,set->lanes[i].index);putc_safe(&w,',');decimal(&w,set->lanes[i].status);putc_safe(&w,',');decimal(&w,set->lanes[i].highlight);for(j=0;j<set->lanes[i].angle_count;j++){putc_safe(&w,',');decimal(&w,set->lanes[i].angles[j]);}putc_safe(&w,'\n');}
     }
-    if(!w.ok||cap<w.n)return DCC_LIMIT;memcpy(out,temp,w.n);*written=w.n;return DCC_OK;
+    if(!w.ok||cap<w.n)return DCC_LIMIT;
+    memcpy(out,temp,w.n);*written=w.n;return DCC_OK;
 }
