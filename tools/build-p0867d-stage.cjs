@@ -43,12 +43,10 @@ function checkedRead(root, relative) {
 function checkedProcman(stdfPath) {
   const stdf=fs.readFileSync(stdfPath),want=target.systemImages.stdf;
   if(stdf.length!==want.bytes||sha256(stdf)!==want.sha256)throw new Error('STDF.bin is not the exact stock P0867D system image');
-  const marker=Buffer.from('##  core managers\n'),start=stdf.indexOf(marker);
-  if(start<0||stdf.indexOf(marker,start+1)>=0)throw new Error('procman_core.cfg marker is missing or ambiguous');
-  const end=stdf.indexOf(0xff,start);if(end<0)throw new Error('procman_core.cfg terminator is missing');
-  const config=stdf.subarray(start,end),file=want.procmanCore;
-  if(config.length!==file.bytes||sha256(config)!==file.sha256)throw new Error('extracted procman_core.cfg fingerprint mismatch');
-  return config;
+  const marker=Buffer.from('##  core managers\n'),file=want.procmanCore,matches=[];let start=0;
+  while((start=stdf.indexOf(marker,start))>=0){const end=stdf.indexOf(0xff,start);if(end<0)break;const candidate=stdf.subarray(start,end);if(candidate.length===file.bytes&&sha256(candidate)===file.sha256)matches.push(candidate);start+=marker.length;}
+  if(matches.length!==1)throw new Error('exact procman_core.cfg is missing or ambiguous');
+  return matches[0];
 }
 function patchHmi(text) {
   const match = text.match(/^BOOTCLASSPATH="([^"]+)"$/m);
