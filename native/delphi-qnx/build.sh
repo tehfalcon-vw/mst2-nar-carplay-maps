@@ -22,6 +22,7 @@ $CLANG $CFLAGS -c "$HERE/../video/src/dcc_video_lifecycle.c" -o "$OUT/dcc_video_
 $CLANG $CFLAGS -fvisibility=default -c "$HERE/src/runtime_hook.c" -o "$OUT/runtime_hook.o"
 $CLANG $CFLAGS -fvisibility=default -c "$HERE/src/airplay_target.c" -o "$OUT/airplay_target.o"
 $CLANG $CFLAGS -fvisibility=default -c "$HERE/src/alt111_ingress.c" -o "$OUT/alt111_ingress.o"
+$CLANG $CFLAGS -fvisibility=default -c "$HERE/src/airplay_hook.c" -o "$OUT/airplay_hook.o"
 $CLANG $CFLAGS -c "$HERE/src/relay.c" -o "$OUT/relay.o"
 $CLANG $CFLAGS -c "$HERE/src/aeabi.c" -o "$OUT/aeabi.o"
 $CLANG $CFLAGS -c "$HERE/../rgi/src/dcc_rgi.c" -o "$OUT/dcc_rgi.o"
@@ -45,7 +46,14 @@ $LLD -shared -z defs -z max-page-size=0x1000 --hash-style=sysv --gc-sections \
   "$OUT/airplay_target.o" "$OUT/alt111_ingress.o" "$OUT/dcc_arm32_hook.o" \
   "$OUT/dcc_avc.o" "$OUT/dcc_screen.o" "$OUT/dcc_screen_session.o" \
   "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/libc.so.3"
+$LLD -shared -z defs -z max-page-size=0x1000 --hash-style=sysv --gc-sections \
+  -soname libmst2_nar_airplay.so -init dcc_airplay_hook_init \
+  -o "$OUT/libmst2_nar_airplay.so" "$OUT/airplay_hook.o" "$OUT/runtime_hook.o" \
+  "$OUT/airplay_target.o" "$OUT/alt111_ingress.o" "$OUT/dcc_arm32_hook.o" \
+  "$OUT/dcc_avc.o" "$OUT/dcc_screen.o" "$OUT/dcc_screen_session.o" \
+  "$OUT/dcc_video_lifecycle.o" "$OUT/dcc_video_slot.o" "$OUT/libc.so.3"
 echo "$OUT/libmst2_nar_ipod.so"
 echo "$OUT/libmst2_nar_launch.so"
 echo "$OUT/libmst2_nar_video_gate.so"
 echo "$OUT/libmst2_nar_airplay_runtime.so"
+echo "$OUT/libmst2_nar_airplay.so"

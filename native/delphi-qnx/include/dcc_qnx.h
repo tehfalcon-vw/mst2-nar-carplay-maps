@@ -48,6 +48,7 @@ int rename(const char *,const char *);
 int delay(unsigned);
 int pthread_create(pthread_t *,const void *,void *(*)(void *),void *);
 int pthread_detach(pthread_t);
+int accept(int, void *, void *);
 void *dlopen(const char *, int);
 void *dlsym(void *, const char *);
 void *memcpy(void *, const void *, size_t);
